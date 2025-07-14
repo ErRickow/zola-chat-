@@ -1,5 +1,5 @@
 // Berkas ini sekarang hanya akan mendukung penyedia "ollama"
-// dan memperbaiki masalah type checking untuk createOpenAI.
+// dan memperbaiki masalah type checking untuk createOpenAI dengan lebih akurat.
 
 // PENTING: Pertahankan impor ini.
 import { createOpenAI } from "@ai-sdk/openai";
@@ -18,14 +18,18 @@ import type {
 // import { createXai, xai } from "@ai-sdk/xai";
 // import { createAnthropic, anthropic } from "@ai-sdk/anthropic";
 
-// Karena kita hanya menggunakan model chat yang kompatibel dengan OpenAI,
-// kita bisa menyederhanakan definisi tipenya.
-type OpenAIChatSettings = Parameters<typeof createOpenAI>[0]; // Ini sudah benar untuk konfigurasi dasar createOpenAI
-type OllamaProviderSettings = OpenAIChatSettings;
+// Definisi tipe yang lebih akurat untuk setelan chat yang diteruskan ke .chat()
+// Kita ambil langsung dari parameter kedua metode .chat() dari @ai-sdk/openai
+// Parameters<typeof createOpenAI().chat>[1] akan mendapatkan tipe parameter kedua dari fungsi chat()
+type OpenAIChatMethodSettings = Parameters<ReturnType<typeof createOpenAI>['chat']>[1];
+
+// Tipe untuk konfigurasi provider Ollama (yang sekarang adalah Neosantara)
+// Ini adalah tipe yang akan digunakan di ModelConfig.apiSdk
+type OllamaProviderSettings = OpenAIChatMethodSettings;
 
 type ModelSettings<T extends SupportedModel> = T extends OllamaModel
   ? OllamaProviderSettings
-  : never;
+  : never; // Hanya OllamaModel yang tersisa
 
 export type OpenProvidersOptions<T extends SupportedModel> = ModelSettings<T>;
 
@@ -39,16 +43,6 @@ const getOllamaBaseURL = () => {
   );
 };
 
-// Membuat instance provider Ollama dengan baseURL yang dapat dikonfigurasi
-// Ini akan digunakan untuk memanggil API Neosantara Anda
-const createOllamaProvider = () => {
-  return createOpenAI({
-    baseURL: `${getOllamaBaseURL()}/v1`, // Menambahkan /v1 karena API Neosantara Anda memiliki /v1/chat/completions
-    apiKey: env.NEOSANTARA_API_KEY, // Menggunakan kunci API dari variabel lingkungan
-    // name: "neosantara", // Properti 'name' tidak ada di tipe createOpenAI, jadi hapus atau komentari ini
-  });
-};
-
 export function openproviders<T extends SupportedModel>(
   modelId: T,
   settings?: OpenProvidersOptions<T>,
@@ -57,16 +51,16 @@ export function openproviders<T extends SupportedModel>(
   const provider = getProviderForModel(modelId);
 
   if (provider === "ollama") {
-    // Panggil createOpenAI langsung di sini dengan modelId yang benar
-    // dan pastikan setelan yang diteruskan sesuai dengan OpenAIChatSettings.
-    // Kita perlu memastikan bahwa `modelId` yang diteruskan adalah tipe yang diharapkan oleh `openai.chat()`.
-    // Karena kita sudah membatasi `OllamaModel` untuk menjadi string ID, ini harusnya cocok.
-    return createOpenAI({
+    const ollamaInstance = createOpenAI({
       baseURL: `${getOllamaBaseURL()}/v1`,
       apiKey: apiKey || env.NEOSANTARA_API_KEY,
-    }).chat(
-      modelId as string, // Cast modelId ke string karena createOpenAI().chat() mengharapkan string modelId
-      settings as OpenAIChatSettings // Pastikan settings sesuai dengan OpenAIChatSettings
+    });
+
+    // Panggil metode .chat() pada instance provider yang dibuat
+    // dan pastikan setelan yang diteruskan sesuai dengan OpenAIChatMethodSettings.
+    return ollamaInstance.chat(
+      modelId as string, // Cast modelId ke string
+      settings as OpenAIChatMethodSettings // Cast settings ke tipe yang benar
     );
   }
 
