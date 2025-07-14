@@ -1,24 +1,17 @@
+// Berkas ini akan menyertakan variabel lingkungan untuk kunci API Neosantara Anda.
+
 export const env = {
-  OPENAI_API_KEY: process.env.OPENAI_API_KEY!,
-  MISTRAL_API_KEY: process.env.MISTRAL_API_KEY!,
-  GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY!,
-  PERPLEXITY_API_KEY: process.env.PERPLEXITY_API_KEY!,
-  ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY!,
-  XAI_API_KEY: process.env.XAI_API_KEY!,
-  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY!,
-}
+  OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL!,
+  // Tambahkan variabel lingkungan untuk kunci API Neosantara Anda di sini
+  NEOSANTARA_API_KEY: process.env.NEOSANTARA_API_KEY!, // Kunci API Neosantara Anda
+};
 
 export function createEnvWithUserKeys(
   userKeys: Record<string, string> = {}
 ): typeof env {
   return {
-    OPENAI_API_KEY: userKeys.openai || env.OPENAI_API_KEY,
-    MISTRAL_API_KEY: userKeys.mistral || env.MISTRAL_API_KEY,
-    PERPLEXITY_API_KEY: userKeys.perplexity || env.PERPLEXITY_API_KEY,
-    GOOGLE_GENERATIVE_AI_API_KEY:
-      userKeys.google || env.GOOGLE_GENERATIVE_AI_API_KEY,
-    ANTHROPIC_API_KEY: userKeys.anthropic || env.ANTHROPIC_API_KEY,
-    XAI_API_KEY: userKeys.xai || env.XAI_API_KEY,
-    OPENROUTER_API_KEY: userKeys.openrouter || env.OPENROUTER_API_KEY,
-  }
+    OLLAMA_BASE_URL: userKeys.ollama || env.OLLAMA_BASE_URL,
+    // Pastikan kunci API Neosantara Anda juga disertakan di sini
+    NEOSANTARA_API_KEY: userKeys.neosantara || env.NEOSANTARA_API_KEY,
+  };
 }

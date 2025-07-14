@@ -1,40 +1,42 @@
-"use client"
+// Berkas ini akan menghapus referensi ke bagian API Keys
 
-import { Button } from "@/components/ui/button"
-import { DrawerClose } from "@/components/ui/drawer"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { isSupabaseEnabled } from "@/lib/supabase/config"
-import { cn, isDev } from "@/lib/utils"
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { DrawerClose } from "@/components/ui/drawer";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { isSupabaseEnabled } from "@/lib/supabase/config";
+import { cn, isDev } from "@/lib/utils";
 import {
   CubeIcon,
   GearSixIcon,
-  KeyIcon,
+  KeyIcon, // KeyIcon masih diimpor tapi tidak digunakan jika tab API Keys dihapus
   PaintBrushIcon,
   PlugsConnectedIcon,
   XIcon,
-} from "@phosphor-icons/react"
-import { useState } from "react"
-import { ByokSection } from "./apikeys/byok-section"
-import { InteractionPreferences } from "./appearance/interaction-preferences"
-import { LayoutSettings } from "./appearance/layout-settings"
-import { ThemeSelection } from "./appearance/theme-selection"
-import { ConnectionsPlaceholder } from "./connections/connections-placeholder"
-import { DeveloperTools } from "./connections/developer-tools"
-import { OllamaSection } from "./connections/ollama-section"
-import { AccountManagement } from "./general/account-management"
-import { UserProfile } from "./general/user-profile"
-import { ModelsSettings } from "./models/models-settings"
+} from "@phosphor-icons/react";
+import { useState } from "react";
+// import { ByokSection } from "./apikeys/byok-section"; // HAPUS IMPOR INI
+import { InteractionPreferences } from "./appearance/interaction-preferences";
+import { LayoutSettings } from "./appearance/layout-settings";
+import { ThemeSelection } from "./appearance/theme-selection";
+import { ConnectionsPlaceholder } from "./connections/connections-placeholder";
+import { DeveloperTools } from "./connections/developer-tools";
+import { OllamaSection } from "./connections/ollama-section";
+import { AccountManagement } from "./general/account-management";
+import { UserProfile } from "./general/user-profile";
+import { ModelsSettings } from "./models/models-settings";
 
 type SettingsContentProps = {
-  isDrawer?: boolean
-}
+  isDrawer?: boolean;
+};
 
-type TabType = "general" | "appearance" | "models" | "connections"
+type TabType = "general" | "appearance" | "models" | "connections"; // HAPUS "apikeys" dari sini
 
 export function SettingsContent({
   isDrawer = false,
 }: SettingsContentProps) {
-  const [activeTab, setActiveTab] = useState<TabType>("general")
+  const [activeTab, setActiveTab] = useState<TabType>("general");
 
   return (
     <div
@@ -63,7 +65,7 @@ export function SettingsContent({
         )}
       >
         {isDrawer ? (
-          // Mobile version - tabs on top
+          // Versi Seluler - tab di atas
           <div className="w-full items-start justify-start overflow-hidden py-4">
             <div>
               <TabsList className="mb-4 flex w-full min-w-0 flex-nowrap items-center justify-start overflow-x-auto bg-transparent px-0">
@@ -81,6 +83,8 @@ export function SettingsContent({
                   <PaintBrushIcon className="size-4" />
                   <span>Appearance</span>
                 </TabsTrigger>
+                {/* HAPUS TAB INI UNTUK API KEYS */}
+                {/*
                 <TabsTrigger
                   value="apikeys"
                   className="flex shrink-0 items-center gap-2"
@@ -88,6 +92,7 @@ export function SettingsContent({
                   <KeyIcon className="size-4" />
                   <span>API Keys</span>
                 </TabsTrigger>
+                */}
                 <TabsTrigger
                   value="models"
                   className="flex shrink-0 items-center gap-2"
@@ -105,7 +110,7 @@ export function SettingsContent({
               </TabsList>
             </div>
 
-            {/* Mobile tabs content */}
+            {/* Konten tab seluler */}
             <TabsContent value="general" className="space-y-6 px-6">
               <UserProfile />
               {isSupabaseEnabled && (
@@ -121,9 +126,12 @@ export function SettingsContent({
               <InteractionPreferences />
             </TabsContent>
 
+            {/* HAPUS KONTEN TAB INI UNTUK API KEYS */}
+            {/*
             <TabsContent value="apikeys" className="px-6">
               <ByokSection />
             </TabsContent>
+            */}
 
             <TabsContent value="models" className="px-6">
               <ModelsSettings />
@@ -137,7 +145,7 @@ export function SettingsContent({
             </TabsContent>
           </div>
         ) : (
-          // Desktop version - tabs on left
+          // Versi Desktop - tab di kiri
           <>
             <TabsList className="block w-48 rounded-none bg-transparent px-3 pt-4">
               <div className="flex w-full flex-col gap-1">
@@ -161,6 +169,8 @@ export function SettingsContent({
                   </div>
                 </TabsTrigger>
 
+                {/* HAPUS TAB INI UNTUK API KEYS */}
+                {/*
                 <TabsTrigger
                   value="apikeys"
                   className="w-full justify-start rounded-md px-3 py-2 text-left"
@@ -170,6 +180,7 @@ export function SettingsContent({
                     <span>API Keys</span>
                   </div>
                 </TabsTrigger>
+                */}
                 <TabsTrigger
                   value="models"
                   className="w-full justify-start rounded-md px-3 py-2 text-left"
@@ -191,7 +202,7 @@ export function SettingsContent({
               </div>
             </TabsList>
 
-            {/* Desktop tabs content */}
+            {/* Konten tab desktop */}
             <div className="flex-1 overflow-auto px-6 pt-4">
               <TabsContent value="general" className="mt-0 space-y-6">
                 <UserProfile />
@@ -208,9 +219,12 @@ export function SettingsContent({
                 <InteractionPreferences />
               </TabsContent>
 
+              {/* HAPUS KONTEN TAB INI UNTUK API KEYS */}
+              {/*
               <TabsContent value="apikeys" className="mt-0 space-y-6">
                 <ByokSection />
               </TabsContent>
+              */}
 
               <TabsContent value="models" className="mt-0 space-y-6">
                 <ModelsSettings />
@@ -227,5 +241,5 @@ export function SettingsContent({
         )}
       </Tabs>
     </div>
-  )
+  );
 }

@@ -127,6 +127,11 @@ export type StaticOllamaModel = "llama3.2:latest" | "qwen2.5-coder:latest"
 // Dynamic Ollama model type - allows any string for auto-detected models
 export type OllamaModel = StaticOllamaModel | (string & {})
 
+export type NAIModel = 
+  | "archipelago-7b"
+  | "nusantara-base"
+  | "bahasa-llm"
+
 export type Provider =
   | "openai"
   | "mistral"
@@ -135,6 +140,7 @@ export type Provider =
   | "anthropic"
   | "xai"
   | "ollama"
+  | "neosantara"
   | "openrouter"
 
 export type SupportedModel =
@@ -145,4 +151,5 @@ export type SupportedModel =
   | AnthropicModel
   | XaiModel
   | OllamaModel
+  | NAIModel
   | OpenRouterModel

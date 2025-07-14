@@ -1,88 +1,20 @@
-import Anthropic from "@/components/icons/anthropic"
-import Claude from "@/components/icons/claude"
-import DeepSeek from "@/components/icons/deepseek"
-import Gemini from "@/components/icons/gemini"
-import Google from "@/components/icons/google"
-import Grok from "@/components/icons/grok"
-import Meta from "@/components/icons/meta"
-import Mistral from "@/components/icons/mistral"
-import Ollama from "@/components/icons/ollama"
-import OpenAI from "@/components/icons/openai"
-import OpenRouter from "@/components/icons/openrouter"
-import Preplexity from "@/components/icons/perplexity"
-import Xai from "@/components/icons/xai"
+// Berkas ini sekarang hanya akan berisi entri untuk penyedia "Neosantara" (sebelumnya Ollama)
+
+import Ollama from "@/components/icons/ollama"; // Menggunakan ikon Ollama default
 
 export type Provider = {
-  id: string
-  name: string
-  available: boolean
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
-}
+  id: string;
+  name: string;
+  available: boolean;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+};
 
 export const PROVIDERS: Provider[] = [
   {
-    id: "openrouter",
-    name: "OpenRouter",
-    icon: OpenRouter,
+    id: "ollama", // PENTING: Pertahankan ID internal ini sebagai "ollama"
+    name: "Neosantara", // UBAH INI: Nama yang akan ditampilkan di UI Zola
+    available: true, // Pastikan ini true agar penyedia terlihat
+    icon: Ollama, // Gunakan ikon Ollama default, atau ganti jika Anda membuat ikon kustom
   },
-  {
-    id: "openai",
-    name: "OpenAI",
-    icon: OpenAI,
-  },
-  {
-    id: "mistral",
-    name: "Mistral",
-    icon: Mistral,
-  },
-  {
-    id: "deepseek",
-    name: "DeepSeek",
-    icon: DeepSeek,
-  },
-  {
-    id: "gemini",
-    name: "Gemini",
-    icon: Gemini,
-  },
-  {
-    id: "claude",
-    name: "Claude",
-    icon: Claude,
-  },
-  {
-    id: "grok",
-    name: "Grok",
-    icon: Grok,
-  },
-  {
-    id: "xai",
-    name: "XAI",
-    icon: Xai,
-  },
-  {
-    id: "google",
-    name: "Google",
-    icon: Google,
-  },
-  {
-    id: "anthropic",
-    name: "Anthropic",
-    icon: Anthropic,
-  },
-  {
-    id: "ollama",
-    name: "Ollama",
-    icon: Ollama,
-  },
-  {
-    id: "meta",
-    name: "Meta",
-    icon: Meta,
-  },
-  {
-    id: "perplexity",
-    name: "Perplexity",
-    icon: Preplexity,
-  },
-] as Provider[]
+  // Hapus semua entri penyedia lain di sini
+];
