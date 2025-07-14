@@ -43,7 +43,7 @@ export async function POST(request: Request) {
         .single()
 
       if (error || !data) {
-        console.error("Error creating guest user:", error)
+        console.error("Error creating guest user:", error + error.stack)
         return new Response(
           JSON.stringify({
             error: "Failed to create guest user",
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
 
     return new Response(JSON.stringify({ user: userData }), { status: 200 })
   } catch (err: unknown) {
-    console.error("Error in create-guest endpoint:", err)
+    console.error("Error in create-guest endpoint:", err + err.stack)
 
     return new Response(
       JSON.stringify({ error: (err as Error).message || "Internal server error" }),
