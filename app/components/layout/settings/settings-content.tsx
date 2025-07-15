@@ -1,42 +1,40 @@
-// Berkas ini akan menghapus referensi ke bagian API Keys
+"use client"
 
-"use client";
-
-import { Button } from "@/components/ui/button";
-import { DrawerClose } from "@/components/ui/drawer";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { isSupabaseEnabled } from "@/lib/supabase/config";
-import { cn, isDev } from "@/lib/utils";
+import { Button } from "@/components/ui/button"
+import { DrawerClose } from "@/components/ui/drawer"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { isSupabaseEnabled } from "@/lib/supabase/config"
+import { cn, isDev } from "@/lib/utils"
 import {
   CubeIcon,
   GearSixIcon,
-  KeyIcon, // KeyIcon masih diimpor tapi tidak digunakan jika tab API Keys dihapus
+  KeyIcon,
   PaintBrushIcon,
   PlugsConnectedIcon,
   XIcon,
-} from "@phosphor-icons/react";
-import { useState } from "react";
-// import { ByokSection } from "./apikeys/byok-section"; // HAPUS IMPOR INI
-import { InteractionPreferences } from "./appearance/interaction-preferences";
-import { LayoutSettings } from "./appearance/layout-settings";
-import { ThemeSelection } from "./appearance/theme-selection";
-import { ConnectionsPlaceholder } from "./connections/connections-placeholder";
-import { DeveloperTools } from "./connections/developer-tools";
-import { OllamaSection } from "./connections/ollama-section";
-import { AccountManagement } from "./general/account-management";
-import { UserProfile } from "./general/user-profile";
-import { ModelsSettings } from "./models/models-settings";
+} from "@phosphor-icons/react"
+import { useState } from "react"
+//import { ByokSection } from "./apikeys/byok-section"
+import { InteractionPreferences } from "./appearance/interaction-preferences"
+import { LayoutSettings } from "./appearance/layout-settings"
+import { ThemeSelection } from "./appearance/theme-selection"
+import { ConnectionsPlaceholder } from "./connections/connections-placeholder"
+import { DeveloperTools } from "./connections/developer-tools"
+import { OllamaSection } from "./connections/ollama-section"
+import { AccountManagement } from "./general/account-management"
+import { UserProfile } from "./general/user-profile"
+import { ModelsSettings } from "./models/models-settings"
 
 type SettingsContentProps = {
-  isDrawer?: boolean;
-};
+  isDrawer?: boolean
+}
 
-type TabType = "general" | "appearance" | "models" | "connections"; // HAPUS "apikeys" dari sini
+type TabType = "general" | "appearance" | "models"
 
 export function SettingsContent({
   isDrawer = false,
 }: SettingsContentProps) {
-  const [activeTab, setActiveTab] = useState<TabType>("general");
+  const [activeTab, setActiveTab] = useState<TabType>("general")
 
   return (
     <div
@@ -65,7 +63,7 @@ export function SettingsContent({
         )}
       >
         {isDrawer ? (
-          // Versi Seluler - tab di atas
+          // Mobile version - tabs on top
           <div className="w-full items-start justify-start overflow-hidden py-4">
             <div>
               <TabsList className="mb-4 flex w-full min-w-0 flex-nowrap items-center justify-start overflow-x-auto bg-transparent px-0">
@@ -83,8 +81,6 @@ export function SettingsContent({
                   <PaintBrushIcon className="size-4" />
                   <span>Appearance</span>
                 </TabsTrigger>
-                {/* HAPUS TAB INI UNTUK API KEYS */}
-                {/*
                 <TabsTrigger
                   value="apikeys"
                   className="flex shrink-0 items-center gap-2"
@@ -92,7 +88,6 @@ export function SettingsContent({
                   <KeyIcon className="size-4" />
                   <span>API Keys</span>
                 </TabsTrigger>
-                */}
                 <TabsTrigger
                   value="models"
                   className="flex shrink-0 items-center gap-2"
@@ -100,17 +95,17 @@ export function SettingsContent({
                   <CubeIcon className="size-4" />
                   <span>Models</span>
                 </TabsTrigger>
-                <TabsTrigger
+                {/*<TabsTrigger
                   value="connections"
                   className="flex shrink-0 items-center gap-2"
                 >
                   <PlugsConnectedIcon className="size-4" />
                   <span>Connections</span>
-                </TabsTrigger>
+                </TabsTrigger>*/}
               </TabsList>
             </div>
 
-            {/* Konten tab seluler */}
+            {/* Mobile tabs content */}
             <TabsContent value="general" className="space-y-6 px-6">
               <UserProfile />
               {isSupabaseEnabled && (
@@ -126,26 +121,23 @@ export function SettingsContent({
               <InteractionPreferences />
             </TabsContent>
 
-            {/* HAPUS KONTEN TAB INI UNTUK API KEYS */}
-            {/*
-            <TabsContent value="apikeys" className="px-6">
+            {/*<TabsContent value="apikeys" className="px-6">
               <ByokSection />
-            </TabsContent>
-            */}
+            </TabsContent>*/}
 
             <TabsContent value="models" className="px-6">
               <ModelsSettings />
               {/* <ModelVisibilitySettings /> */}
             </TabsContent>
 
-            <TabsContent value="connections" className="space-y-6 px-6">
+            {/*<TabsContent value="connections" className="space-y-6 px-6">
               {!isDev && <ConnectionsPlaceholder />}
               {isDev && <OllamaSection />}
               {isDev && <DeveloperTools />}
-            </TabsContent>
+            </TabsContent>*/}
           </div>
         ) : (
-          // Versi Desktop - tab di kiri
+          // Desktop version - tabs on left
           <>
             <TabsList className="block w-48 rounded-none bg-transparent px-3 pt-4">
               <div className="flex w-full flex-col gap-1">
@@ -169,9 +161,7 @@ export function SettingsContent({
                   </div>
                 </TabsTrigger>
 
-                {/* HAPUS TAB INI UNTUK API KEYS */}
-                {/*
-                <TabsTrigger
+               {/* <TabsTrigger
                   value="apikeys"
                   className="w-full justify-start rounded-md px-3 py-2 text-left"
                 >
@@ -179,8 +169,7 @@ export function SettingsContent({
                     <KeyIcon className="size-4" />
                     <span>API Keys</span>
                   </div>
-                </TabsTrigger>
-                */}
+                </TabsTrigger>*/}
                 <TabsTrigger
                   value="models"
                   className="w-full justify-start rounded-md px-3 py-2 text-left"
@@ -190,7 +179,7 @@ export function SettingsContent({
                     <span>Models</span>
                   </div>
                 </TabsTrigger>
-                <TabsTrigger
+                {/*<TabsTrigger
                   value="connections"
                   className="w-full justify-start rounded-md px-3 py-2 text-left"
                 >
@@ -198,11 +187,11 @@ export function SettingsContent({
                     <PlugsConnectedIcon className="size-4" />
                     <span>Connections</span>
                   </div>
-                </TabsTrigger>
+                </TabsTrigger>*/}
               </div>
             </TabsList>
 
-            {/* Konten tab desktop */}
+            {/* Desktop tabs content */}
             <div className="flex-1 overflow-auto px-6 pt-4">
               <TabsContent value="general" className="mt-0 space-y-6">
                 <UserProfile />
@@ -219,27 +208,24 @@ export function SettingsContent({
                 <InteractionPreferences />
               </TabsContent>
 
-              {/* HAPUS KONTEN TAB INI UNTUK API KEYS */}
-              {/*
-              <TabsContent value="apikeys" className="mt-0 space-y-6">
+              {/*<TabsContent value="apikeys" className="mt-0 space-y-6">
                 <ByokSection />
-              </TabsContent>
-              */}
+              </TabsContent>*/}
 
               <TabsContent value="models" className="mt-0 space-y-6">
                 <ModelsSettings />
                 {/* <ModelVisibilitySettings /> */}
               </TabsContent>
 
-              <TabsContent value="connections" className="mt-0 space-y-6">
+              {/*<TabsContent value="connections" className="mt-0 space-y-6">
                 {!isDev && <ConnectionsPlaceholder />}
                 {isDev && <OllamaSection />}
                 {isDev && <DeveloperTools />}
-              </TabsContent>
+              </TabsContent>*/}
             </div>
           </>
         )}
       </Tabs>
     </div>
-  );
+  )
 }

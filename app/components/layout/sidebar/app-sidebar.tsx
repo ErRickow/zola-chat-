@@ -114,7 +114,7 @@ export function AppSidebar() {
           )}
         </ScrollArea>
       </SidebarContent>
-      <SidebarFooter className="mb-2 p-3">
+      {/*<SidebarFooter className="mb-2 p-3">
         <a
           href="https://github.com/ibelick/zola"
           className="hover:bg-muted flex items-center gap-2 rounded-md p-2"
@@ -133,7 +133,7 @@ export function AppSidebar() {
             </div>
           </div>
         </a>
-      </SidebarFooter>
+      </SidebarFooter>*/}
     </Sidebar>
   )
 }

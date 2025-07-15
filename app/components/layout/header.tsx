@@ -34,7 +34,6 @@ export function Header({ hasSidebar }: { hasSidebar: boolean }) {
                 className="pointer-events-auto inline-flex items-center text-xl font-medium tracking-tight"
               >
                 <Neosantara className="mr-1 size-4" />
-                {APP_NAME}
               </Link>
               {hasSidebar && isMobile && <HeaderSidebarTrigger />}
             </div>
@@ -58,7 +57,7 @@ export function Header({ hasSidebar }: { hasSidebar: boolean }) {
                 href="/auth"
                 className="font-base text-muted-foreground hover:text-foreground text-base transition-colors"
               >
-                Login
+                Signin
               </Link>
             </div>
           ) : (

@@ -84,7 +84,7 @@ export function UserMenu() {
             <span>@NeosantaraAI</span>
           </a>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
+       {/* <DropdownMenuItem asChild>
           <a
             href="https://github.com/ibelick/zola"
             target="_blank"
@@ -94,7 +94,7 @@ export function UserMenu() {
             <GithubLogoIcon className="size-4" />
             <span>GitHub</span>
           </a>
-        </DropdownMenuItem>
+        </DropdownMenuItem>*/}
       </DropdownMenuContent>
     </DropdownMenu>
   )
