@@ -9,7 +9,6 @@ const Icon = (props: SVGProps < SVGSVGElement > ) => (
     style={{
       shapeRendering: "geometricPrecision",
       textRendering: "geometricPrecision",
-      imageRendering: "optimizeQuality",
       fillRule: "evenodd",
       clipRule: "evenodd",
     }}
