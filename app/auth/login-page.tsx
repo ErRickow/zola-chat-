@@ -51,7 +51,7 @@ export default function LoginPage() {
               Welcome to Zola
             </h1>
             <p className="text-muted-foreground mt-3">
-              Sign in below to increase your message limits.
+              Sign in below to increase your message limit.
             </p>
           </div>
           {error && (
@@ -82,8 +82,8 @@ export default function LoginPage() {
         </div>
       </main>
 
-      <footer className="text-muted-foreground py-6 text-center text-sm">
-        {/* @todo */}
+     {/* <footer className="text-muted-foreground py-6 text-center text-sm">
+        {/* @todo 
         <p>
           By continuing, you agree to our{" "}
           <Link href="/" className="text-foreground hover:underline">
@@ -94,7 +94,7 @@ export default function LoginPage() {
             Privacy Policy
           </Link>
         </p>
-      </footer>
+      </footer>*/}
     </div>
   )
 }

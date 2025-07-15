@@ -5,7 +5,7 @@ import { ModelConfig } from "./types";
 
 // Model statis (hanya model Neosantara Anda yang tersisa)
 const STATIC_MODELS: ModelConfig[] = [
-  ...ollamaModels, // Ini adalah model Neosantara Anda sekarang
+  ...ollamaModels, 
 ];
 
 // Cache model dinamis

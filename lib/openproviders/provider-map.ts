@@ -7,6 +7,7 @@ const MODEL_PROVIDER_MAP: Record<string, Provider> = {
   // Hanya sertakan model dari layanan Neosantara Anda yang Anda definisikan di ollama.ts
   "nusantara-base": "ollama",
   "archipelago-7b": "ollama",
+  "bahasa-llm": "ollama",
   // Tambahkan semua ID model kustom Anda di sini dengan nilai "ollama"
 };
 
@@ -15,7 +16,8 @@ function isOllamaModel(modelId: string): boolean {
   // Pola umum model Ollama atau model kustom Anda
   const ollamaPatterns = [
     /^nusantara-/, // Contoh: Jika ID model Anda dimulai dengan "nusantara-"
-    /^archipelago-/, // Contoh: Jika ID model Anda dimulai dengan "archipelago-"
+    /^archipelago-/,
+    /^bahasa-/,
     // Tambahkan pola lain yang sesuai dengan ID model kustom Anda
     /:latest$/i,
     /:[\d.]+[bB]?$/i, // versi tag seperti :7b, :13b, :1.5
