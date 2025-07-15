@@ -81,7 +81,7 @@ export function UserMenu() {
             className="flex items-center gap-2"
           >
             <XIcon className="size-4 p-0.5" />
-            <span>@zoladotchat</span>
+            <span>@NeosantaraAI</span>
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
