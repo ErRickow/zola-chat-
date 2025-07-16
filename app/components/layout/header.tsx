@@ -33,7 +33,7 @@ export function Header({ hasSidebar }: { hasSidebar: boolean }) {
                 href="/"
                 className="pointer-events-auto inline-flex items-center text-xl font-medium tracking-tight"
               >
-                <NeosantaraLogoText className="mr-1 size-4" />
+                <NeosantaraLogoText className="mr-1 size-4 dark:invert" />
               </Link>
               {hasSidebar && isMobile && <HeaderSidebarTrigger />}
             </div>

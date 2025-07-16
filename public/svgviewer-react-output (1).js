@@ -1,7 +1,6 @@
 import * as React from "react"
-import type { SVGProps } from "react"
-
-const NeosantaraLogo = (props: SVGProps<SVGSVGElement>) => (
+import { SVGProps } from "react"
+const SVGComponent = (props: SVGProps<SVGSVGElement>) => (
   <svg
     xmlns='http://www.w3.org/2000/svg'
     fillRule='evenodd'
@@ -29,19 +28,4 @@ const NeosantaraLogo = (props: SVGProps<SVGSVGElement>) => (
     />
   </svg>
 )
-
-type LogoProps = React.ImgHTMLAttributes < HTMLImageElement > ;
-
-export function NeosantaraLogoText(props: LogoProps) {
-  return (
-    <img
-      src="/black.svg"
-      alt="Neosantara Logo"
-      width="150"
-      height="150"
-      {...props}
-    />
-  );
-}
-
-export default NeosantaraLogo
+export default SVGComponent
