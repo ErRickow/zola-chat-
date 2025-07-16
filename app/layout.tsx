@@ -28,7 +28,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Neosantara AI",
   description:
-    "Chat with Neosantara AI with Culturally Intelegent.",
+    "Chat with Neosantara AI Culturally Intelegent.",
 }
 
 export default async function RootLayout({
@@ -45,7 +45,7 @@ export default async function RootLayout({
         <Script
           async
           src="https://analytics.umami.is/script.js"
-          data-website-id="42e5b68c-5478-41a6-bc68-088d029cee52"
+          data-website-id="a3f10a9d-487a-4376-b64f-f96d3ca5981c"
         />
       ) : null}
       <body
