@@ -106,6 +106,8 @@ export default function LoginPage() {
                 {isLoading ? "Connecting..." : "Continue with Google"}
               </span>
             </Button>
+          </div>
+          <div className="mt-8">
             <Button
               variant="secondary"
               className="w-full text-base sm:text-base"

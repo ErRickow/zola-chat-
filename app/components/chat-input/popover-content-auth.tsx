@@ -51,8 +51,8 @@ export function PopoverContentAuth() {
       align="start"
     >
       <Image
-        src="/banner_forest.jpg"
-        alt={`calm paint generate by ${APP_NAME}`}
+        src="/og.webp"
+        alt={`og from ${APP_NAME}`}
         width={300}
         height={128}
         className="h-32 w-full object-cover"
