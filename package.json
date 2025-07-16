@@ -38,6 +38,8 @@
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.50.3",
     "@tanstack/react-query": "^5.80.6",
+    "@vercel/speed-insights": "latest",
+    "@vercel/analytics": "latest",
     "ai": "^4.3.13",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
