@@ -10,7 +10,7 @@ interface NeosantaraLogoSvgProps extends React.SVGProps < SVGSVGElement > {
 const svgStyles: CSSProperties = {
   shapeRendering: 'geometricPrecision',
   textRendering: 'geometricPrecision',
-  imageRendering: 'optimizeQuality',
+  imageRendering: 'auto',
   fillRule: 'evenodd',
   clipRule: 'evenodd',
 };
