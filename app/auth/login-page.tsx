@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { signInWithGoogle } from "@/lib/api"
+import { signInWithGoogle, signInWithGithub } from "@/lib/api"
 import { createClient } from "@/lib/supabase/client"
 import Image from "next/image"
 import Link from "next/link"
@@ -39,6 +39,34 @@ export default function LoginPage() {
       setIsLoading(false)
     }
   }
+  
+  async function handleSignInWithGithub() {
+    const supabase = createClient()
+    
+    if (!supabase) {
+      throw new Error("Supabase is not configured")
+    }
+    
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      const data = await signInWithGithub(supabase)
+      
+      // Redirect to the provider URL
+      if (data?.url) {
+        window.location.href = data.url
+      }
+    } catch (err: unknown) {
+      console.error("Error signing in with Github:", err)
+      setError(
+        (err as Error).message ||
+        "An unexpected error occurred. Please try again."
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <div className="bg-background flex h-dvh w-full flex-col">
@@ -48,7 +76,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
             <h1 className="text-foreground text-3xl font-medium tracking-tight sm:text-4xl">
-              Continue Using Neosantara AI
+              Continue Signin
             </h1>
             <p className="text-muted-foreground mt-3">
               Sign in below to increase your message limit.
@@ -76,6 +104,24 @@ export default function LoginPage() {
               />
               <span>
                 {isLoading ? "Connecting..." : "Continue with Google"}
+              </span>
+            </Button>
+            <Button
+              variant="secondary"
+              className="w-full text-base sm:text-base"
+              size="lg"
+              onClick={handleSignInWithGithub}
+              disabled={isLoading}
+            >
+              <img
+                src="https://github.com/favicon.ico"
+                alt="Google logo"
+                width={20}
+                height={20}
+                className="mr-2 size-4"
+              />
+              <span>
+                {isLoading ? "Connecting..." : "Continue with Github"}
               </span>
             </Button>
           </div>
