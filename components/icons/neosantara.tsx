@@ -35,7 +35,7 @@ type LogoProps = React.ImgHTMLAttributes < HTMLImageElement > ;
 export function NeosantaraLogoText(props: LogoProps) {
   return (
     <img
-      src="/black.svg"
+      src="/white.svg"
       alt="Neosantara Logo"
       width="150"
       height="150"
