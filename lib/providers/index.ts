@@ -1,6 +1,6 @@
 // Berkas ini sekarang hanya akan berisi entri untuk penyedia "Neosantara" (sebelumnya Ollama)
 
-import { NeosantaraLogo } from "@/components/icons/neosantara"; // Menggunakan ikon Ollama default
+import NeosantaraLogo from "@/components/icons/neosantara"; // Menggunakan ikon Ollama default
 
 export type Provider = {
   id: string;
