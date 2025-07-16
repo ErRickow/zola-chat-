@@ -14,7 +14,7 @@ import {
   XIcon,
 } from "@phosphor-icons/react"
 import { useState } from "react"
-//import { ByokSection } from "./apikeys/byok-section"
+import { NewSection } from "./apikeys/new-section"
 import { InteractionPreferences } from "./appearance/interaction-preferences"
 import { LayoutSettings } from "./appearance/layout-settings"
 import { ThemeSelection } from "./appearance/theme-selection"
@@ -121,9 +121,9 @@ export function SettingsContent({
               <InteractionPreferences />
             </TabsContent>
 
-            {/*<TabsContent value="apikeys" className="px-6">
-              <ByokSection />
-            </TabsContent>*/}
+            <TabsContent value="apikeys" className="px-6">
+              <NewSection />
+            </TabsContent>
 
             <TabsContent value="models" className="px-6">
               <ModelsSettings />
@@ -208,9 +208,9 @@ export function SettingsContent({
                 <InteractionPreferences />
               </TabsContent>
 
-              {/*<TabsContent value="apikeys" className="mt-0 space-y-6">
-                <ByokSection />
-              </TabsContent>*/}
+              <TabsContent value="apikeys" className="mt-0 space-y-6">
+                <NewSection />
+              </TabsContent>
 
               <TabsContent value="models" className="mt-0 space-y-6">
                 <ModelsSettings />

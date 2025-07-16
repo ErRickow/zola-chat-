@@ -59,9 +59,9 @@ export function ButtonFileUpload({
         </Tooltip>
         <PopoverContent className="p-2">
           <div className="text-secondary-foreground text-sm">
-            This model does not support file uploads.
+            Sorry, Neosantara AI does not yet support chat with files.
             <br />
-            Please select another model.
+            Features will be implemented in the future.
           </div>
         </PopoverContent>
       </Popover>

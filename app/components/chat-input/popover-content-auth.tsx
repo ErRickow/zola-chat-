@@ -64,10 +64,10 @@ export function PopoverContentAuth() {
       )}
       <div className="p-3">
         <p className="text-primary mb-1 text-base font-medium">
-          Login to try more features for free
+          Signin to try more features for free
         </p>
         <p className="text-muted-foreground mb-5 text-base">
-          Add files, use more models, BYOK, and more.
+          Add files, use different models and more.
         </p>
         <Button
           variant="secondary"

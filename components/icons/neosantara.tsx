@@ -33,8 +33,8 @@ const NeosantaraLogo = (props: SVGProps<SVGSVGElement>) => (
 const NeosantaraLogoText = (props: SVGProps<SVGSVGElement>) => (
   <svg
     xmlns='http://www.w3.org/2000/svg'
-    width={2048}
-    height={474}
+    width={256}
+    height={256}
     style={{
       shapeRendering: "geometricPrecision",
       textRendering: "geometricPrecision",

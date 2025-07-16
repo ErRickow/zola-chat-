@@ -14,6 +14,8 @@ import { getUserProfile } from "@/lib/user/api"
 import { ThemeProvider } from "next-themes"
 import Script from "next/script"
 import { LayoutClient } from "./layout-client"
+import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from '@vercel/speed-insights/next'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -74,6 +76,8 @@ export default async function RootLayout({
                         <SidebarProvider defaultOpen>
                           <Toaster position="top-center" />
                           {children}
+                          <Analytics />
+                          <SpeedInsights />
                         </SidebarProvider>
                       </ThemeProvider>
                     </TooltipProvider>

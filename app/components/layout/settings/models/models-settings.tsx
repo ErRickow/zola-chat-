@@ -126,7 +126,7 @@ export function ModelsSettings() {
       {/* Favorite Models - Drag and Drop List */}
       <div>
         <h4 className="mb-3 text-sm font-medium">
-          Your favorites ({favoriteModels.length})
+          Chosen ({favoriteModels.length})
         </h4>
         <AnimatePresence initial={false}>
           {favoriteModels.length > 0 ? (
