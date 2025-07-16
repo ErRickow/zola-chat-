@@ -218,7 +218,7 @@ export function Chat() {
             }}
           >
             <h1 className="mb-6 text-3xl font-medium tracking-tight">
-              Can i help you?
+              What can i help you today?
             </h1>
           </motion.div>
         ) : (

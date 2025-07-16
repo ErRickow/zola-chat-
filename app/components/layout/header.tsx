@@ -1,11 +1,11 @@
 "use client"
 
 import { HistoryTrigger } from "@/app/components/history/history-trigger"
-import { AppInfoTrigger } from "@/app/components/layout/app-info/app-info-trigger"
+//import { AppInfoTrigger } from "@/app/components/layout/app-info/app-info-trigger"
 import { ButtonNewChat } from "@/app/components/layout/button-new-chat"
 import { UserMenu } from "@/app/components/layout/user-menu"
 import { useBreakpoint } from "@/app/hooks/use-breakpoint"
-import NeosantaraLogo from "@/components/icons/neosantara"
+import NeosantaraLogoText from "@/components/icons/neosantara"
 import { Button } from "@/components/ui/button"
 import { APP_NAME } from "@/lib/config"
 import { useUserPreferences } from "@/lib/user-preference-store/provider"
@@ -33,7 +33,7 @@ export function Header({ hasSidebar }: { hasSidebar: boolean }) {
                 href="/"
                 className="pointer-events-auto inline-flex items-center text-xl font-medium tracking-tight"
               >
-                <NeosantaraLogo className="mr-1 size-4" />
+                <NeosantaraLogoText className="mr-1 size-4" />
               </Link>
               {hasSidebar && isMobile && <HeaderSidebarTrigger />}
             </div>
@@ -41,7 +41,7 @@ export function Header({ hasSidebar }: { hasSidebar: boolean }) {
           <div />
           {!isLoggedIn ? (
             <div className="pointer-events-auto flex flex-1 items-center justify-end gap-4">
-              <AppInfoTrigger
+              {/*<AppInfoTrigger
                 trigger={
                   <Button
                     variant="ghost"
@@ -52,7 +52,7 @@ export function Header({ hasSidebar }: { hasSidebar: boolean }) {
                     <Info className="size-4" />
                   </Button>
                 }
-              />
+              />*/}
               <Link
                 href="/auth"
                 className="font-base text-muted-foreground hover:text-foreground text-base transition-colors"

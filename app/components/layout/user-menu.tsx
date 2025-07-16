@@ -71,11 +71,11 @@ export function UserMenu() {
         <DropdownMenuSeparator />
         <SettingsTrigger onOpenChange={handleSettingsOpenChange} />
         <FeedbackTrigger />
-        <AppInfoTrigger />
+       {/* <AppInfoTrigger />*/}
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <a
-            href="https://x.com/zoladotchat"
+            href="https://x.com/NeosantaraAI"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2"
