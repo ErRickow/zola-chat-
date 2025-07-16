@@ -141,7 +141,7 @@ export async function signInWithGoogle(supabase: SupabaseClient) {
 /**
  * Signs in user with GitHub OAuth via Supabase
  */
-export async function signInWithGitHub(supabase: SupabaseClient) {
+export async function signInWithGithub(supabase: SupabaseClient) {
   try {
     const isDev = process.env.NODE_ENV === "development"
     

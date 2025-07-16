@@ -121,7 +121,7 @@ export default function LoginPage() {
                 className="mr-2 size-4"
               />
               <span>
-                {isLoading ? "Connecting..." : "Continue with Github"}
+                {isLoading ? "Connecting..." : "Continue with GitHub"}
               </span>
             </Button>
           </div>
