@@ -1,7 +1,5 @@
 import React from 'react';
 
-import React from 'react';
-
 // Define props type for better TypeScript integration
 interface NeosantaraLogoSvgProps extends React.SVGProps < SVGSVGElement > {
   // Add any custom props specific to this icon if needed
