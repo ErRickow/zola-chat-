@@ -131,4 +131,4 @@ const NeosantaraLogoText = (props: SVGProps<SVGSVGElement>) => (
 )
 
 export default NeosantaraLogo
-export default NeosantaraLogoText
+export { NeosantaraLogoText }
