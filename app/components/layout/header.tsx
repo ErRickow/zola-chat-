@@ -5,7 +5,7 @@ import { AppInfoTrigger } from "@/app/components/layout/app-info/app-info-trigge
 import { ButtonNewChat } from "@/app/components/layout/button-new-chat"
 import { UserMenu } from "@/app/components/layout/user-menu"
 import { useBreakpoint } from "@/app/hooks/use-breakpoint"
-import Neosantara from "@/components/icons/neosantara"
+import { NeosantaraLogo } from "@/components/icons/neosantara"
 import { Button } from "@/components/ui/button"
 import { APP_NAME } from "@/lib/config"
 import { useUserPreferences } from "@/lib/user-preference-store/provider"
@@ -33,7 +33,7 @@ export function Header({ hasSidebar }: { hasSidebar: boolean }) {
                 href="/"
                 className="pointer-events-auto inline-flex items-center text-xl font-medium tracking-tight"
               >
-                <Neosantara className="mr-1 size-4" />
+                <NeosantaraLogo className="mr-1 size-4" />
               </Link>
               {hasSidebar && isMobile && <HeaderSidebarTrigger />}
             </div>

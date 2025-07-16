@@ -1,6 +1,6 @@
 // Berkas ini sekarang hanya akan berisi entri untuk penyedia "Neosantara" (sebelumnya Ollama)
 
-import Neosantara from "@/components/icons/neosantara"; // Menggunakan ikon Ollama default
+import { NeosantaraLogo } from "@/components/icons/neosantara"; // Menggunakan ikon Ollama default
 
 export type Provider = {
   id: string;
@@ -14,7 +14,7 @@ export const PROVIDERS: Provider[] = [
     id: "ollama", // PENTING: Pertahankan ID internal ini sebagai "ollama"
     name: "Neosantara",
     available: true, // Pastikan ini true agar penyedia terlihat
-    icon: Neosantara,
+    icon: NeosantaraLogo,
   },
   // Hapus semua entri penyedia lain di sini
 ];
