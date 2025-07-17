@@ -17,6 +17,7 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerDescription,
+  DrawerTrigger
 } from "@/components/ui/drawer"
 import { ButtonCopy } from "../common/button-copy"
 import { CodeMirrorEditor } from "../common/CodeMirror"
