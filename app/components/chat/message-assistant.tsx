@@ -3,7 +3,8 @@
 import { Message, MessageAction, MessageActions, MessageContent } from "@/components/prompt-kit/message";
 import { useUserPreferences } from "@/lib/user-preference-store/provider";
 import { cn } from "@/lib/utils";
-import type { Message as MessageAISDK, UISticker } from "@ai-sdk/react";
+import type { Message as MessageAISDK } from "@ai-sdk/react";
+import type { ToolInvocationUIPart } from "@ai-sdk/ui-utils"; // CORRECTED: Import the correct type
 import { ArrowClockwise, Check, Copy } from "@phosphor-icons/react";
 import { useChatSession } from "@/lib/chat-store/session/provider";
 import { CodeArtifact } from "@/components/common/code-artifact";
@@ -42,9 +43,11 @@ export function MessageAssistant({
   const { chatId } = useChatSession();
   
   const sources = getSources(parts);
+  // CORRECTED: Use the correct type guard for filtering tool invocations.
   const toolInvocationParts = parts?.filter(
-    (part): part is UISticker => part.type === "tool-invocation"
+    (part): part is ToolInvocationUIPart => part.type === "tool-invocation"
   );
+  
   const searchImageResults =
     parts
     ?.filter(
@@ -57,9 +60,7 @@ export function MessageAssistant({
   
   const isLastStreaming = status === 'streaming' && isLast;
   
-  // This function decides what to render based on the `parts` data.
   const renderContent = () => {
-    // Priority 1: If structured `parts` data exists, render it.
     if (parts && Array.isArray(parts) && parts.length > 0) {
       const contentParts = parts.filter(
         (part) => part.type !== "tool-invocation" && part.type !== "source"
@@ -69,7 +70,7 @@ export function MessageAssistant({
         switch (part.type) {
           case 'text':
             return part.text && part.text.trim() ? (
-              <MessageContent key={index} markdown={true} className="w-full bg-transparent p-0">
+              <MessageContent key={index} markdown={true} className="bg-transparent p-0">
                 {part.text}
               </MessageContent>
             ) : null;
@@ -97,7 +98,6 @@ export function MessageAssistant({
       });
     }
     
-    // Priority 2: Fallback to rendering the raw `children` string if `parts` is not available.
     if (children && children.trim() !== "") {
       return <MessageContent markdown={true}>{children}</MessageContent>;
     }
