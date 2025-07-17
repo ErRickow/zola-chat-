@@ -1,54 +1,33 @@
-"use client";
-
-import { Message, MessageAction, MessageActions, MessageContent } from "@/components/prompt-kit/message";
-import { useUserPreferences } from "@/lib/user-preference-store/provider";
-import { cn } from "@/lib/utils";
-import type { Message as MessageAISDK } from "@ai-sdk/react";
-import type { ToolInvocationUIPart } from "@ai-sdk/ui-utils"; // CORRECTED: Import the correct type
-import { ArrowClockwise, Check, Copy } from "@phosphor-icons/react";
-import { useChatSession } from "@/lib/chat-store/session/provider";
-import { CodeArtifact } from "@/components/common/code-artifact";
-import { getSources } from "./get-sources";
-import { Reasoning } from "./reasoning";
-import { SourcesList } from "./sources-list";
-import { ToolInvocation } from "./tool-invocation";
-
-// Helper function to parse code blocks from raw markdown
-const parseCodeBlock = (markdown: string) => {
-  const codeBlockRegex = /```(\w+)?\n([\s\S]+?)```/;
-  const match = markdown.match(codeBlockRegex);
-
-  if (match) {
-    const language = match[1] || 'plaintext';
-    const code = match[2].trim();
-    // Check if there is any text other than the code block
-    const surroundingText = markdown.replace(codeBlockRegex, '').trim();
-    return {
-      isCodeOnly: surroundingText.length === 0,
-      language,
-      code,
-      title: `Generated ${language.charAt(0).toUpperCase() + language.slice(1)} Snippet`
-    };
-  }
-  return null;
-};
+import {
+  Message,
+  MessageAction,
+  MessageActions,
+  MessageContent,
+} from "@/components/prompt-kit/message"
+import { useUserPreferences } from "@/lib/user-preference-store/provider"
+import { cn } from "@/lib/utils"
+import type { Message as MessageAISDK } from "@ai-sdk/react"
+import { ArrowClockwise, Check, Copy } from "@phosphor-icons/react"
+import { getSources } from "./get-sources"
+import { Reasoning } from "./reasoning"
+import { SearchImages } from "./search-images"
+import { SourcesList } from "./sources-list"
+import { ToolInvocation } from "./tool-invocation"
 
 type MessageAssistantProps = {
-  children: string; // This is the raw markdown content
-  id: string;
-  isLast?: boolean;
-  hasScrollAnchor?: boolean;
-  copied?: boolean;
-  copyToClipboard?: () => void;
-  onReload?: () => void;
-  parts?: MessageAISDK["parts"];
-  status?: "streaming" | "ready" | "submitted" | "error";
-  className?: string;
-};
+  children: string
+  isLast?: boolean
+  hasScrollAnchor?: boolean
+  copied?: boolean
+  copyToClipboard?: () => void
+  onReload?: () => void
+  parts?: MessageAISDK["parts"]
+  status?: "streaming" | "ready" | "submitted" | "error"
+  className?: string
+}
 
 export function MessageAssistant({
   children,
-  id: messageId,
   isLast,
   hasScrollAnchor,
   copied,
@@ -58,63 +37,114 @@ export function MessageAssistant({
   status,
   className,
 }: MessageAssistantProps) {
-  const { preferences } = useUserPreferences();
-  const { chatId } = useChatSession();
-
-  const sources = getSources(parts);
+  const { preferences } = useUserPreferences()
+  const sources = getSources(parts)
   const toolInvocationParts = parts?.filter(
-    (part): part is ToolInvocationUIPart => part.type === "tool-invocation"
-  );
-  
-  const isLastStreaming = status === 'streaming' && isLast;
-  const codeBlockInfo = parseCodeBlock(children);
+    (part) => part.type === "tool-invocation"
+  )
+  const reasoningParts = parts?.find((part) => part.type === "reasoning")
+  const contentNullOrEmpty = children === null || children === ""
+  const isLastStreaming = status === "streaming" && isLast
+  const searchImageResults =
+    parts
+      ?.filter(
+        (part) =>
+          part.type === "tool-invocation" &&
+          part.toolInvocation?.state === "result" &&
+          part.toolInvocation?.toolName === "imageSearch" &&
+          part.toolInvocation?.result?.content?.[0]?.type === "images"
+      )
+      .flatMap((part) =>
+        part.type === "tool-invocation" &&
+        part.toolInvocation?.state === "result" &&
+        part.toolInvocation?.toolName === "imageSearch" &&
+        part.toolInvocation?.result?.content?.[0]?.type === "images"
+          ? (part.toolInvocation?.result?.content?.[0]?.results ?? [])
+          : []
+      ) ?? []
 
   return (
     <Message
-      className={cn("group flex w-full max-w-3xl flex-col items-start gap-2 px-6 pb-2", hasScrollAnchor && "min-h-scroll-anchor", className)}
-    >
-      {/* Render tools and other non-text parts first */}
-      {preferences.showToolInvocations && toolInvocationParts && toolInvocationParts.length > 0 && (
-        <div className="w-full">
-          <ToolInvocation toolInvocations={toolInvocationParts} />
-        </div>
+      className={cn(
+        "group flex w-full max-w-3xl flex-1 items-start gap-4 px-6 pb-2",
+        hasScrollAnchor && "min-h-scroll-anchor",
+        className
       )}
-
-      {/* Conditional Rendering: CodeArtifact or simple Markdown */}
-      <div className="flex w-full flex-col gap-4">
-        {codeBlockInfo?.isCodeOnly ? (
-          <CodeArtifact
-            messageId={messageId}
-            chatId={chatId!}
-            documentId={`code-artifact-${messageId}`}
-            title={codeBlockInfo.title}
-            language={codeBlockInfo.language}
-            code={codeBlockInfo.code}
-            isLoading={isLastStreaming}
+    >
+      <div className={cn("flex min-w-full flex-col gap-2", isLast && "pb-8")}>
+        {reasoningParts && reasoningParts.reasoning && (
+          <Reasoning
+            reasoning={reasoningParts.reasoning}
+            isStreaming={status === "streaming"}
           />
-        ) : (
-          <MessageContent markdown={true}>{children}</MessageContent>
         )}
-      </div>
 
-      {sources && sources.length > 0 && <SourcesList sources={sources} />}
+        {toolInvocationParts &&
+          toolInvocationParts.length > 0 &&
+          preferences.showToolInvocations && (
+            <ToolInvocation toolInvocations={toolInvocationParts} />
+          )}
 
-      {!isLastStreaming && children.trim() && (
-        <MessageActions className="-ml-2 flex gap-0 opacity-0 transition-opacity group-hover:opacity-100">
-          <MessageAction tooltip={copied ? "Copied!" : "Copy text"} side="bottom">
-            <button className="hover:bg-accent/60 text-muted-foreground hover:text-foreground flex size-7.5 items-center justify-center rounded-full bg-transparent transition" aria-label="Copy text" onClick={copyToClipboard} type="button">
-              {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-            </button>
-          </MessageAction>
-          {isLast && (
-            <MessageAction tooltip="Regenerate" side="bottom" delayDuration={0}>
-              <button className="hover:bg-accent/60 text-muted-foreground hover:text-foreground flex size-7.5 items-center justify-center rounded-full bg-transparent transition" aria-label="Regenerate" onClick={onReload} type="button">
-                <ArrowClockwise className="size-4" />
+        {searchImageResults.length > 0 && (
+          <SearchImages results={searchImageResults} />
+        )}
+
+        {contentNullOrEmpty ? null : (
+          <MessageContent
+            className={cn(
+              "prose dark:prose-invert relative min-w-full bg-transparent p-0",
+              "prose-h1:scroll-m-20 prose-h1:text-2xl prose-h1:font-semibold prose-h2:mt-8 prose-h2:scroll-m-20 prose-h2:text-xl prose-h2:mb-3 prose-h2:font-medium prose-h3:scroll-m-20 prose-h3:text-base prose-h3:font-medium prose-h4:scroll-m-20 prose-h5:scroll-m-20 prose-h6:scroll-m-20 prose-strong:font-medium prose-table:block prose-table:overflow-y-auto"
+            )}
+            markdown={true}
+          >
+            {children}
+          </MessageContent>
+        )}
+
+        {sources && sources.length > 0 && <SourcesList sources={sources} />}
+
+        {Boolean(isLastStreaming || contentNullOrEmpty) ? null : (
+          <MessageActions
+            className={cn(
+              "-ml-2 flex gap-0 opacity-0 transition-opacity group-hover:opacity-100"
+            )}
+          >
+            <MessageAction
+              tooltip={copied ? "Copied!" : "Copy text"}
+              side="bottom"
+            >
+              <button
+                className="hover:bg-accent/60 text-muted-foreground hover:text-foreground flex size-7.5 items-center justify-center rounded-full bg-transparent transition"
+                aria-label="Copy text"
+                onClick={copyToClipboard}
+                type="button"
+              >
+                {copied ? (
+                  <Check className="size-4" />
+                ) : (
+                  <Copy className="size-4" />
+                )}
               </button>
             </MessageAction>
-          )}
-        </MessageActions>
-      )}
+            {isLast ? (
+              <MessageAction
+                tooltip="Regenerate"
+                side="bottom"
+                delayDuration={0}
+              >
+                <button
+                  className="hover:bg-accent/60 text-muted-foreground hover:text-foreground flex size-7.5 items-center justify-center rounded-full bg-transparent transition"
+                  aria-label="Regenerate"
+                  onClick={onReload}
+                  type="button"
+                >
+                  <ArrowClockwise className="size-4" />
+                </button>
+              </MessageAction>
+            ) : null}
+          </MessageActions>
+        )}
+      </div>
     </Message>
-  );
+  )
 }

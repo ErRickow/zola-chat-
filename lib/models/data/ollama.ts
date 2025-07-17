@@ -114,7 +114,7 @@ const neosantaraModels: ModelConfig[] = [
     icon: "ollama",
     apiSdk: (apiKey?: string) =>
       openproviders(
-        "bahasa-llm" as string,
+        "archipelago-7b" as string,
         undefined,
         apiKey
       ),
