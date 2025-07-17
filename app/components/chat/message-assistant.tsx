@@ -14,17 +14,26 @@ import { SearchImages } from "./search-images";
 import { SourcesList } from "./sources-list";
 import { ToolInvocation } from "./tool-invocation";
 
+// Define a new, extended type that includes our custom code artifact.
+type ExtendedUIPart = MessageAISDK['parts'][number] | {
+  type: 'code_artifact';
+  documentId: string;
+  title: string;
+  language: string;
+  code: string;
+};
+
 type MessageAssistantProps = {
   children: string; // The raw markdown content, used for copy-pasting and as a fallback
   id: string;
-  isLast ? : boolean;
-  hasScrollAnchor ? : boolean;
-  copied ? : boolean;
-  copyToClipboard ? : () => void;
-  onReload ? : () => void;
-  parts ? : MessageAISDK["parts"];
-  status ? : "streaming" | "ready" | "submitted" | "error";
-  className ? : string;
+  isLast?: boolean;
+  hasScrollAnchor?: boolean;
+  copied?: boolean;
+  copyToClipboard?: () => void;
+  onReload?: () => void;
+  parts?: MessageAISDK["parts"];
+  status?: "streaming" | "ready" | "submitted" | "error";
+  className?: string;
 };
 
 export function MessageAssistant({
@@ -43,38 +52,41 @@ export function MessageAssistant({
   const { chatId } = useChatSession();
   
   const sources = getSources(parts);
-  // CORRECTED: Use the correct type guard for filtering tool invocations.
   const toolInvocationParts = parts?.filter(
     (part): part is ToolInvocationUIPart => part.type === "tool-invocation"
   );
   
   const searchImageResults =
     parts
-    ?.filter(
-      (part: any) =>
-      part.type === "tool-invocation" &&
-      part.toolInvocation?.state === "result" &&
-      part.toolInvocation?.toolName === "imageSearch"
-    )
-    .flatMap((part: any) => part.toolInvocation?.result?.content?.[0]?.results ?? []) ?? [];
-  
+      ?.filter(
+        (part): part is ToolInvocationUIPart =>
+          part.type === "tool-invocation" &&
+          part.toolInvocation?.state === "result" &&
+          part.toolInvocation?.toolName === "imageSearch"
+      )
+      .flatMap((part: any) => part.toolInvocation?.result?.content?.[0]?.results ?? []) ?? [];
+
   const isLastStreaming = status === 'streaming' && isLast;
-  
+
+  // CRITICAL FIX: Cast the incoming `parts` to our new extended type array.
+  // This tells TypeScript that we know what we're doing and to allow our custom type.
+  const allParts = (parts || []) as ExtendedUIPart[];
+
   const renderContent = () => {
-    if (parts && Array.isArray(parts) && parts.length > 0) {
-      const contentParts = parts.filter(
+    if (allParts.length > 0) {
+      const contentParts = allParts.filter(
         (part) => part.type !== "tool-invocation" && part.type !== "source"
       );
       
-      return contentParts.map((part: any, index: number) => {
+      return contentParts.map((part, index) => {
         switch (part.type) {
           case 'text':
             return part.text && part.text.trim() ? (
-              <MessageContent key={index} markdown={true} className="bg-transparent p-0">
+              <MessageContent key={index} markdown={true} className="w-full bg-transparent p-0">
                 {part.text}
               </MessageContent>
             ) : null;
-            
+          
           case 'code_artifact':
             return (
               <CodeArtifact
@@ -88,25 +100,26 @@ export function MessageAssistant({
                 isLoading={isLastStreaming}
               />
             );
-            
+          
           case 'reasoning':
             return <Reasoning key={index} reasoning={part.reasoning} isStreaming={status === 'streaming'} />;
-            
+
           default:
             return null;
         }
       });
     }
-    
+
     if (children && children.trim() !== "") {
       return <MessageContent markdown={true}>{children}</MessageContent>;
     }
-    
+
     return null;
   };
   
-  const hasVisibleContent = (parts && parts.some(p => p.type === 'text' || p.type === 'code_artifact')) || (children && children.trim() !== '');
-  
+  // This comparison is now safe because the `allParts` array is typed to include 'code_artifact'.
+  const hasVisibleContent = allParts.some(p => p.type === 'text' || p.type === 'code_artifact') || (children && children.trim() !== '');
+
   return (
     <Message
       className={cn("group flex w-full max-w-3xl flex-col items-start gap-2 px-6 pb-2", hasScrollAnchor && "min-h-scroll-anchor", className)}
