@@ -24,7 +24,7 @@ import { ButtonCopy } from "../common/button-copy"
 import { CodeMirrorEditor } from "../common/CodeMirror"
 import { useBreakpoint } from "@/app/hooks/use-breakpoint"
 import { Code, ShareFat } from "@phosphor-icons/react"
-import { toast } from "@/components/ui/toast" 
+import { toast } from "@/components/ui/toast"
 
 export type CodeBlockProps = {
   children?: React.ReactNode
@@ -51,12 +51,15 @@ export type CodeBlockCodeProps = {
   language?: string
   theme?: string
   className?: string
+  // Tambahkan status untuk indikator loading (jika akan diimplementasikan)
+  // status?: "streaming" | "ready" | "submitted" | "error";
 } & React.HTMLProps<HTMLDivElement>
 
 function CodeBlockCode({
   code,
   language = "plaintext",
   className,
+  // status, // Terima status jika diperlukan
   ...props
 }: CodeBlockCodeProps) {
   const { resolvedTheme: appTheme } = useTheme()
@@ -90,20 +93,22 @@ function CodeBlockCode({
   // Konten modal CodeMirror (akan sama untuk Drawer dan Dialog)
   const modalContent = (
     <>
-      <div className="flex justify-between items-center bg-secondary p-3 border-b border-border">
+      <div className="flex justify-between items-center bg-secondary p-3 border-b border-border flex-shrink-0"> {/* Tambah flex-shrink-0 */}
         <span className="font-medium">{language} Code</span>
       </div>
       {/* Kontainer untuk CodeMirror agar dapat digulir */}
-      <div className="flex-1 overflow-auto">
+      {/* Penting: flex-1 dan overflow-y-auto di sini */}
+      <div className="flex-1 overflow-y-auto">
         <CodeMirrorEditor
-          code={code} // Lewatkan KODE LENGKAP di sini
+          code={code}
           language={language}
-          readOnly={true} // Mode hanya-baca
+          readOnly={true}
           theme={currentTheme}
+          className="h-full w-full" // Pastikan CodeMirrorEditor mengisi tinggi yang tersedia
         />
       </div>
-      <div className="flex justify-between items-center bg-secondary p-3 border-t border-border">
-        <ButtonCopy code={code} /> {/* Tombol salin */}
+      <div className="flex justify-between items-center bg-secondary p-3 border-t border-border flex-shrink-0"> {/* Tambah flex-shrink-0 */}
+        <ButtonCopy code={code} />
         <button
           onClick={handleShareCode}
           type="button"
@@ -118,7 +123,6 @@ function CodeBlockCode({
 
   return (
     <CodeBlock className={cn(className, "relative")}>
-      {/* Header CodeBlock yang menampilkan nama bahasa */}
       <CodeBlockGroup className="flex h-9 items-center justify-between px-4 rounded-t-xl">
         <div className="text-muted-foreground py-1 pr-2 font-mono text-xs">
           {language}
@@ -128,14 +132,13 @@ function CodeBlockCode({
       {isMobile ? (
         <Drawer open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DrawerTrigger asChild>
-            {/* Trigger minimalis: sebuah div yang menampilkan judul dan ikon */}
             <div
               className="cursor-pointer w-full text-left p-4 rounded-b-xl hover:bg-accent/50 transition-colors flex items-center justify-center gap-2"
               onClick={() => setIsModalOpen(true)}
               {...props}
             >
               <Code className="size-5 text-muted-foreground" />
-              <span className="font-medium text-foreground">View {language} Code</span>
+              <span className="font-medium text-foreground">View Generated {language} Code</span>
             </div>
           </DrawerTrigger>
           <DrawerContent className="w-full h-dvh max-h-[90vh] flex flex-col rounded-t-lg overflow-hidden">
@@ -149,7 +152,6 @@ function CodeBlockCode({
       ) : (
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogTrigger asChild>
-            {/* Trigger minimalis: sebuah div yang menampilkan judul dan ikon */}
             <div
               className="cursor-pointer w-full text-left p-4 rounded-b-xl hover:bg-accent/50 transition-colors flex items-center justify-center gap-2"
               onClick={() => setIsModalOpen(true)}
@@ -159,6 +161,7 @@ function CodeBlockCode({
               <span className="font-medium text-foreground">View {language} Code</span>
             </div>
           </DialogTrigger>
+          {/* Penting: DialogContent juga harus flex-col */}
           <DialogContent className="w-[90vw] h-[80vh] max-w-4xl p-0 flex flex-col rounded-lg overflow-hidden">
             <DialogHeader className="sr-only">
               <DialogTitle>{language} Code</DialogTitle>
