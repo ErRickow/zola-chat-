@@ -3,28 +3,15 @@
 import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
 import React, { useState, useMemo } from "react"
-// import { codeToHtml } from "shiki" // Shiki tidak lagi digunakan untuk pratinjau
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
-  DrawerTrigger,
-} from "@/components/ui/drawer"
+// Hapus import Dialog dan Drawer
+// import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog"
+// import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerTrigger } from "@/components/ui/drawer"
 import { ButtonCopy } from "../common/button-copy"
 import { CodeMirrorEditor } from "../common/CodeMirror"
-import { useBreakpoint } from "@/app/hooks/use-breakpoint"
-import { Code, ShareFat } from "@phosphor-icons/react"
+// import { useBreakpoint } from "@/app/hooks/use-breakpoint" // Tidak perlu lagi useBreakpoint jika tidak ada Drawer/Dialog
+import { Code, ShareFat, ArrowsInSimple, ArrowsOutSimple } from "@phosphor-icons/react" // Tambah ikon expand/collapse
 import { toast } from "@/components/ui/toast"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export type CodeBlockProps = {
   children?: React.ReactNode
@@ -51,20 +38,18 @@ export type CodeBlockCodeProps = {
   language?: string
   theme?: string
   className?: string
-  // Tambahkan status untuk indikator loading (jika akan diimplementasikan)
-  // status?: "streaming" | "ready" | "submitted" | "error";
+  status?: "streaming" | "ready" | "submitted" | "error";
 } & React.HTMLProps<HTMLDivElement>
 
 function CodeBlockCode({
   code,
   language = "plaintext",
   className,
-  // status, // Terima status jika diperlukan
+  status,
   ...props
 }: CodeBlockCodeProps) {
   const { resolvedTheme: appTheme } = useTheme()
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const isMobile = useBreakpoint(768);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const currentTheme = appTheme === "dark" ? "dark" : "light";
 
@@ -90,35 +75,7 @@ function CodeBlockCode({
     }
   };
 
-  // Konten modal CodeMirror (akan sama untuk Drawer dan Dialog)
-  const modalContent = (
-    <>
-      <div className="flex justify-between items-center bg-secondary p-3 border-b border-border flex-shrink-0"> {/* Tambah flex-shrink-0 */}
-        <span className="font-medium">{language} Code</span>
-      </div>
-      {/* Kontainer untuk CodeMirror agar dapat digulir */}
-      {/* Penting: flex-1 dan overflow-y-auto di sini */}
-      <div className="flex-1 overflow-y-auto">
-        <CodeMirrorEditor
-          code={code}
-          language={language}
-          readOnly={true}
-          theme={currentTheme}
-        />
-      </div>
-      <div className="flex justify-between items-center bg-secondary p-3 border-t border-border flex-shrink-0"> {/* Tambah flex-shrink-0 */}
-        <ButtonCopy code={code} />
-        <button
-          onClick={handleShareCode}
-          type="button"
-          className="ml-2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80 dark:border-none h-9 px-4 py-2 has-[>svg]:px-3"
-        >
-          <ShareFat className="size-4" />
-          Share Code
-        </button>
-      </div>
-    </>
-  );
+  const isLoading = status === "streaming" || status === "submitted";
 
   return (
     <CodeBlock className={cn(className, "relative")}>
@@ -126,49 +83,70 @@ function CodeBlockCode({
         <div className="text-muted-foreground py-1 pr-2 font-mono text-xs">
           {language}
         </div>
+        {/* Tombol aksi di header */}
+        <div className="flex gap-2">
+          {isExpanded && (
+            <>
+              <ButtonCopy code={code} />
+              <button
+                onClick={handleShareCode}
+                type="button"
+                className="ml-2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80 dark:border-none h-9 px-4 py-2 has-[>svg]:px-3"
+              >
+                <ShareFat className="size-4" />
+                Share
+              </button>
+            </>
+          )}
+          {/* Tombol Expand/Collapse */}
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            type="button"
+            className="ml-2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80 dark:border-none h-9 px-4 py-2 has-[>svg]:px-3"
+          >
+            {isExpanded ? (
+              <>
+                <ArrowsInSimple className="size-4" />
+                Collapse
+              </>
+            ) : (
+              <>
+                <ArrowsOutSimple className="size-4" />
+                Expand
+              </>
+            )}
+          </button>
+        </div>
       </CodeBlockGroup>
 
-      {isMobile ? (
-        <Drawer open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DrawerTrigger asChild>
-            <div
-              className="cursor-pointer w-full text-left p-4 rounded-b-xl hover:bg-accent/50 transition-colors flex items-center justify-center gap-2"
-              onClick={() => setIsModalOpen(true)}
-              {...props}
-            >
-              <Code className="size-5 text-muted-foreground" />
-              <span className="font-medium text-foreground">View Generated {language} Code</span>
-            </div>
-          </DrawerTrigger>
-          <DrawerContent className="w-full h-dvh max-h-[90vh] flex flex-col rounded-t-lg overflow-hidden">
-            <DrawerHeader className="sr-only">
-              <DrawerTitle>{language} Code</DrawerTitle>
-              <DrawerDescription>View and copy the full code block.</DrawerDescription>
-            </DrawerHeader>
-            {modalContent}
-          </DrawerContent>
-        </Drawer>
+      {isLoading ? (
+        <div className="cursor-default w-full text-left p-4 rounded-b-xl flex items-center justify-center gap-2">
+          <Skeleton className="size-5 rounded-full" />
+          <Skeleton className="h-4 w-32" />
+        </div>
       ) : (
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogTrigger asChild>
+        <>
+          {!isExpanded ? (
             <div
               className="cursor-pointer w-full text-left p-4 rounded-b-xl hover:bg-accent/50 transition-colors flex items-center justify-center gap-2"
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => setIsExpanded(true)} // Klik untuk expand
               {...props}
             >
               <Code className="size-5 text-muted-foreground" />
               <span className="font-medium text-foreground">View {language} Code</span>
             </div>
-          </DialogTrigger>
-          {/* Penting: DialogContent juga harus flex-col */}
-          <DialogContent className="w-[90vw] h-[80vh] max-w-4xl p-0 flex flex-col rounded-lg overflow-hidden">
-            <DialogHeader className="sr-only">
-              <DialogTitle>{language} Code</DialogTitle>
-              <DialogDescription>View and copy the full code block.</DialogDescription>
-            </DialogHeader>
-            {modalContent}
-          </DialogContent>
-        </Dialog>
+          ) : (
+            // Tampilan CodeMirror penuh saat expanded
+            <div className="relative flex-1 overflow-y-auto max-h-[500px] md:max-h-[700px] lg:max-h-[800px] rounded-b-xl"> {/* Max height agar bisa scroll */}
+              <CodeMirrorEditor
+                code={code}
+                language={language}
+                readOnly={true}
+                theme={currentTheme}
+              />
+            </div>
+          )}
+        </>
       )}
     </CodeBlock>
   );
