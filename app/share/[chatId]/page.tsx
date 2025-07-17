@@ -4,10 +4,12 @@ import { createClient } from "@/lib/supabase/server"
 import type { Metadata } from "next"
 import { notFound, redirect } from "next/navigation"
 import Article from "./article"
-import { Skeleton } from "@/components/ui/skeleton" 
+import { Skeleton } from "@/components/ui/skeleton"
+import React from "react"
 
 export const dynamic = "force-static"
 
+// Perbaiki tipe untuk params: langsung objek, bukan Promise
 export async function generateMetadata({
   params,
 }: {
@@ -91,7 +93,7 @@ export default async function ShareChat({
     return notFound()
   }
 
-  const { chatId } = params
+  const { chatId } = params 
   const supabase = await createClient()
 
   if (!supabase) {
