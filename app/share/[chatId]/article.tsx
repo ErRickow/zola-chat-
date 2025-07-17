@@ -72,13 +72,6 @@ export default function Article({
             const parts = message?.parts as MessageAISDK["parts"]
             const sources = getSources(parts)
 
-            // Menentukan info pengirim untuk pesan user
-            const senderInfo = message.role === 'user' ? {
-              id: message.user_id,
-              displayName: message.users?.display_name,
-              profileImage: message.users?.profile_image,
-            } : null;
-
             return (
               <div key={message.id}>
                 <Message
