@@ -125,7 +125,7 @@ export default async function ShareChat({
   // Memformat pesan agar sesuai dengan tipe yang diharapkan oleh komponen MessageUser/MessageAssistant
   const formattedMessages = messagesData.map(msg => ({
     ...msg,
-    id: String(msg.id), // Pastikan ID adalah string
+    id: msg.id, // Pastikan ID adalah string
     createdAt: new Date(msg.created_at || ""),
     content: msg.content || "",
     // Tambahkan properti pengirim untuk pesan user
