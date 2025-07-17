@@ -1,16 +1,17 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { EditorView, basicSetup } from '@codemirror/basic-setup';
+import { EditorView } from '@codemirror/view';
 import { EditorState, Compartment } from '@codemirror/state';
+import { basicSetup } from 'codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { html } from '@codemirror/lang-html';
 import { css } from '@codemirror/lang-css';
-import { oneDark } from '@codemirror/theme-one-dark'; // Contoh tema gelap
+import { oneDark } from '@codemirror/theme-one-dark';
 import { StreamLanguage } from '@codemirror/language';
-import { python } from '@codemirror/legacy-modes/mode/python'; // Contoh: untuk Python lama
+import { python } from '@codemirror/lang-python';
 
 interface CodeMirrorEditorProps {
   code: string;
-  language: string; // e.g., 'javascript', 'typescript', 'css', 'html', 'python', 'json', 'yaml'
+  language: string;
   readOnly?: boolean;
   onChange?: (value: string) => void;
   theme?: 'light' | 'dark';
@@ -25,7 +26,6 @@ export function CodeMirrorEditor({ code, language, readOnly = true, onChange, th
   useEffect(() => {
     if (!editorRef.current) return;
 
-    // Fungsi untuk mendapatkan ekstensi bahasa yang sesuai
     const getLanguageExtension = (lang: string) => {
       switch (lang) {
         case 'javascript':
@@ -42,32 +42,31 @@ export function CodeMirrorEditor({ code, language, readOnly = true, onChange, th
           return css();
         case 'python':
         case 'py':
-          return StreamLanguage.define(python); // Menggunakan legacy-modes untuk Python
+          return StreamLanguage.define(python);
         case 'json':
           // CodeMirror 6 tidak memiliki lang-json bawaan, bisa pakai lang-javascript dengan mode json
-          return javascript({ jsx: false, typescript: false }); // Atau cari ekstensi json pihak ketiga
+          // Atau cari ekstensi json pihak ketiga seperti @codemirror/lang-json
+          return javascript({ jsx: false, typescript: false });
         case 'yaml':
         case 'yml':
           // Tidak ada ekstensi bawaan, bisa pakai plaintext atau cari pihak ketiga
           return [];
         default:
-          return []; // Plaintext atau tidak ada highlighting
+          return [];
       }
     };
 
-    // Fungsi untuk mendapatkan tema yang sesuai
     const getThemeExtension = (currentTheme: string) => {
-      return currentTheme === 'dark' ? oneDark : EditorView.baseTheme({}); // oneDark untuk tema gelap, tema dasar kosong untuk terang
+      return currentTheme === 'dark' ? oneDark : EditorView.baseTheme({});
     };
 
     const startState = EditorState.create({
       doc: code,
       extensions: [
-        basicSetup,
+        basicSetup, // Gunakan basicSetup dari 'codemirror'
         EditorView.editable.of(!readOnly),
         languageCompartment.current.of(getLanguageExtension(language)),
         themeCompartment.current.of(getThemeExtension(theme)),
-        EditorView.lineWrapping, // Mengaktifkan word wrap
         EditorView.updateListener.of((update) => {
           if (update.docChanged && onChange && !readOnly) {
             onChange(update.state.doc.toString());
@@ -116,11 +115,10 @@ export function CodeMirrorEditor({ code, language, readOnly = true, onChange, th
     }
   }, [theme, editorView]);
 
-
   return (
     <div
       ref={editorRef}
-      className="h-full w-full overflow-hidden rounded-lg" // Pastikan CodeMirror mengisi kontainer
+      className="h-full w-full overflow-hidden rounded-lg"
     />
   );
 }
