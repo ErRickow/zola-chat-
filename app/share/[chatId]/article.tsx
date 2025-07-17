@@ -11,6 +11,7 @@ import { Header } from "./header"
 
 // Perbarui tipe MessageType agar mencakup info pengguna
 type MessageType = Tables<"messages"> & {
+  id: string
   users?: {
     display_name: string | null
     profile_image: string | null
