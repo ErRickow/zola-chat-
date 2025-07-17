@@ -11,7 +11,7 @@ import { Reasoning } from "./reasoning";
 import { SearchImages } from "./search-images";
 import { SourcesList } from "./sources-list";
 import { ToolInvocation } from "./tool-invocation";
-import { CodeArtifact } from "@components/common/code-artifact"; 
+import { CodeArtifact } from "@/components/common/code-artifact"; 
 
 type MessageAssistantProps = {
   children: string;

@@ -1,4 +1,4 @@
-import { CodeArtifact } from "@/app/components/common/code-artifact";
+import { CodeArtifact } from "@/components/common/code-artifact";
 import { NeosantaraLogoText } from "@/components/icons/neosantara";
 import { APP_DOMAIN } from "@/lib/config";
 import { Message, ContentPart } from "@/app/types/api.types";
