@@ -144,6 +144,7 @@ export default async function ShareChat({
   return (
     <React.Suspense fallback={<LoadingSkeleton />}>
       <Article
+        id={chatData.id}
         messages={formattedMessages}
         date={chatData.created_at || ""}
         title={chatData.title || ""}
