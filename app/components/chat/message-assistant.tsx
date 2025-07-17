@@ -3,8 +3,7 @@
 import { Message, MessageAction, MessageActions, MessageContent } from "@/components/prompt-kit/message";
 import { useUserPreferences } from "@/lib/user-preference-store/provider";
 import { cn } from "@/lib/utils";
-import type { Message as MessageAISDK } from "@ai-sdk/react";
-import type { ToolInvocationUIPart } from "@ai-sdk/ui-utils"; // CORRECTED: Import the correct type
+import type { Message as MessageAISDK, ToolInvocationUIPart, UIPart } from "@ai-sdk/react";
 import { ArrowClockwise, Check, Copy } from "@phosphor-icons/react";
 import { useChatSession } from "@/lib/chat-store/session/provider";
 import { CodeArtifact } from "@/components/common/code-artifact";
@@ -14,26 +13,28 @@ import { SearchImages } from "./search-images";
 import { SourcesList } from "./sources-list";
 import { ToolInvocation } from "./tool-invocation";
 
-// Define a new, extended type that includes our custom code artifact.
-type ExtendedUIPart = MessageAISDK['parts'][number] | {
+// CORRECTED TYPE DEFINITION:
+// We define our custom artifact part and then create a union type.
+type CodeArtifactPart = {
   type: 'code_artifact';
   documentId: string;
   title: string;
   language: string;
   code: string;
 };
+type ExtendedUIPart = UIPart | CodeArtifactPart;
 
 type MessageAssistantProps = {
-  children: string; // The raw markdown content, used for copy-pasting and as a fallback
+  children: string; // The raw markdown content, used as a fallback
   id: string;
-  isLast?: boolean;
-  hasScrollAnchor?: boolean;
-  copied?: boolean;
-  copyToClipboard?: () => void;
-  onReload?: () => void;
-  parts?: MessageAISDK["parts"];
-  status?: "streaming" | "ready" | "submitted" | "error";
-  className?: string;
+  isLast ? : boolean;
+  hasScrollAnchor ? : boolean;
+  copied ? : boolean;
+  copyToClipboard ? : () => void;
+  onReload ? : () => void;
+  parts ? : MessageAISDK["parts"];
+  status ? : "streaming" | "ready" | "submitted" | "error";
+  className ? : string;
 };
 
 export function MessageAssistant({
@@ -57,21 +58,19 @@ export function MessageAssistant({
   );
   
   const searchImageResults =
-    parts
-      ?.filter(
-        (part): part is ToolInvocationUIPart =>
-          part.type === "tool-invocation" &&
-          part.toolInvocation?.state === "result" &&
-          part.toolInvocation?.toolName === "imageSearch"
-      )
-      .flatMap((part: any) => part.toolInvocation?.result?.content?.[0]?.results ?? []) ?? [];
-
+    toolInvocationParts
+    ?.filter(
+      (part: any) =>
+      part.toolInvocation?.state === "result" &&
+      part.toolInvocation?.toolName === "imageSearch"
+    )
+    .flatMap((part: any) => part.toolInvocation?.result?.content?.[0]?.results ?? []) ?? [];
+  
   const isLastStreaming = status === 'streaming' && isLast;
-
-  // CRITICAL FIX: Cast the incoming `parts` to our new extended type array.
-  // This tells TypeScript that we know what we're doing and to allow our custom type.
+  
+  // Cast the incoming `parts` array to our new extended type.
   const allParts = (parts || []) as ExtendedUIPart[];
-
+  
   const renderContent = () => {
     if (allParts.length > 0) {
       const contentParts = allParts.filter(
@@ -86,7 +85,7 @@ export function MessageAssistant({
                 {part.text}
               </MessageContent>
             ) : null;
-          
+            
           case 'code_artifact':
             return (
               <CodeArtifact
@@ -100,26 +99,25 @@ export function MessageAssistant({
                 isLoading={isLastStreaming}
               />
             );
-          
+            
           case 'reasoning':
             return <Reasoning key={index} reasoning={part.reasoning} isStreaming={status === 'streaming'} />;
-
+            
           default:
             return null;
         }
       });
     }
-
+    
     if (children && children.trim() !== "") {
       return <MessageContent markdown={true}>{children}</MessageContent>;
     }
-
+    
     return null;
   };
   
-  // This comparison is now safe because the `allParts` array is typed to include 'code_artifact'.
   const hasVisibleContent = allParts.some(p => p.type === 'text' || p.type === 'code_artifact') || (children && children.trim() !== '');
-
+  
   return (
     <Message
       className={cn("group flex w-full max-w-3xl flex-col items-start gap-2 px-6 pb-2", hasScrollAnchor && "min-h-scroll-anchor", className)}
