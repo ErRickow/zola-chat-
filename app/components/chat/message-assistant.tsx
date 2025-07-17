@@ -10,35 +10,40 @@ import { useChatSession } from "@/lib/chat-store/session/provider";
 import { CodeArtifact } from "@/components/common/code-artifact";
 import { getSources } from "./get-sources";
 import { Reasoning } from "./reasoning";
-import { SearchImages } from "./search-images";
 import { SourcesList } from "./sources-list";
 import { ToolInvocation } from "./tool-invocation";
 
-// CORRECTED TYPE DEFINITION:
-// We define our custom artifact part and then create a union type with the base UIPart from the SDK.
-// This correctly tells TypeScript about our custom 'code_artifact' type.
-type CodeArtifactPart = {
-  type: 'code_artifact';
-  documentId: string;
-  title: string;
-  language: string;
-  code: string;
-};
-// Use the actual exported type for a single part from the SDK if available, or a fallback.
-type ExtendedUIPart = MessageAISDK['parts'] extends(infer U)[] ? U | CodeArtifactPart : CodeArtifactPart;
+// Helper function to parse code blocks from raw markdown
+const parseCodeBlock = (markdown: string) => {
+  const codeBlockRegex = /```(\w+)?\n([\s\S]+?)```/;
+  const match = markdown.match(codeBlockRegex);
 
+  if (match) {
+    const language = match[1] || 'plaintext';
+    const code = match[2].trim();
+    // Check if there is any text other than the code block
+    const surroundingText = markdown.replace(codeBlockRegex, '').trim();
+    return {
+      isCodeOnly: surroundingText.length === 0,
+      language,
+      code,
+      title: `Generated ${language.charAt(0).toUpperCase() + language.slice(1)} Snippet`
+    };
+  }
+  return null;
+};
 
 type MessageAssistantProps = {
-  children: string; // The raw markdown content, used as a fallback
+  children: string; // This is the raw markdown content
   id: string;
-  isLast ? : boolean;
-  hasScrollAnchor ? : boolean;
-  copied ? : boolean;
-  copyToClipboard ? : () => void;
-  onReload ? : () => void;
-  parts ? : MessageAISDK["parts"];
-  status ? : "streaming" | "ready" | "submitted" | "error";
-  className ? : string;
+  isLast?: boolean;
+  hasScrollAnchor?: boolean;
+  copied?: boolean;
+  copyToClipboard?: () => void;
+  onReload?: () => void;
+  parts?: MessageAISDK["parts"];
+  status?: "streaming" | "ready" | "submitted" | "error";
+  className?: string;
 };
 
 export function MessageAssistant({
@@ -55,106 +60,61 @@ export function MessageAssistant({
 }: MessageAssistantProps) {
   const { preferences } = useUserPreferences();
   const { chatId } = useChatSession();
-  
+
   const sources = getSources(parts);
   const toolInvocationParts = parts?.filter(
     (part): part is ToolInvocationUIPart => part.type === "tool-invocation"
   );
   
-  const searchImageResults =
-    toolInvocationParts
-    ?.filter(
-      (part: any) =>
-      part.toolInvocation?.state === "result" &&
-      part.toolInvocation?.toolName === "imageSearch"
-    )
-    .flatMap((part: any) => part.toolInvocation?.result?.content?.[0]?.results ?? []) ?? [];
-  
   const isLastStreaming = status === 'streaming' && isLast;
-  
-  const allParts = (parts || []) as ExtendedUIPart[];
-  
-  const renderContent = () => {
-    if (allParts.length > 0) {
-      const contentParts = allParts.filter(
-        (part) => part.type !== "tool-invocation" && part.type !== "source"
-      );
-      
-      return contentParts.map((part, index) => {
-        switch (part.type) {
-          case 'text':
-            return part.text && part.text.trim() ? (
-              <MessageContent key={index} markdown={true} className="w-full bg-transparent p-0">
-                {part.text}
-              </MessageContent>
-            ) : null;
-            
-          case 'code_artifact':
-            return (
-              <CodeArtifact
-                key={index}
-                messageId={messageId}
-                chatId={chatId!}
-                documentId={part.documentId}
-                title={part.title}
-                language={part.language}
-                code={part.code}
-                isLoading={isLastStreaming}
-              />
-            );
-            
-          case 'reasoning':
-            return <Reasoning key={index} reasoning={part.reasoning} isStreaming={status === 'streaming'} />;
-            
-          default:
-            return null;
-        }
-      });
-    }
-    
-    if (children && children.trim() !== "") {
-      return <MessageContent markdown={true}>{children}</MessageContent>;
-    }
-    
-    return null;
-  };
-  
-  const hasVisibleContent = allParts.some(p => p.type === 'text' || p.type === 'code_artifact') || (children && children.trim() !== '');
-  
+  const codeBlockInfo = parseCodeBlock(children);
+
   return (
     <Message
       className={cn("group flex w-full max-w-3xl flex-col items-start gap-2 px-6 pb-2", hasScrollAnchor && "min-h-scroll-anchor", className)}
     >
-        {preferences.showToolInvocations && toolInvocationParts && toolInvocationParts.length > 0 && (
-          <div className="w-full">
-            <ToolInvocation toolInvocations={toolInvocationParts} />
-          </div>
-        )}
-
-        {searchImageResults.length > 0 && <SearchImages results={searchImageResults} />}
-        
-        <div className="flex w-full flex-col gap-4">
-            {renderContent()}
+      {/* Render tools and other non-text parts first */}
+      {preferences.showToolInvocations && toolInvocationParts && toolInvocationParts.length > 0 && (
+        <div className="w-full">
+          <ToolInvocation toolInvocations={toolInvocationParts} />
         </div>
+      )}
 
-        {sources && sources.length > 0 && <SourcesList sources={sources} />}
+      {/* Conditional Rendering: CodeArtifact or simple Markdown */}
+      <div className="flex w-full flex-col gap-4">
+        {codeBlockInfo?.isCodeOnly ? (
+          <CodeArtifact
+            messageId={messageId}
+            chatId={chatId!}
+            documentId={`code-artifact-${messageId}`}
+            title={codeBlockInfo.title}
+            language={codeBlockInfo.language}
+            code={codeBlockInfo.code}
+            isLoading={isLastStreaming}
+          />
+        ) : (
+          <MessageContent markdown={true}>{children}</MessageContent>
+        )}
+      </div>
 
-        {!isLastStreaming && hasVisibleContent && (
-          <MessageActions className="-ml-2 flex gap-0 opacity-0 transition-opacity group-hover:opacity-100">
-            <MessageAction tooltip={copied ? "Copied!" : "Copy text"} side="bottom">
-              <button className="hover:bg-accent/60 text-muted-foreground hover:text-foreground flex size-7.5 items-center justify-center rounded-full bg-transparent transition" aria-label="Copy text" onClick={copyToClipboard} type="button">
-                {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+      {sources && sources.length > 0 && <SourcesList sources={sources} />}
+
+      {!isLastStreaming && children.trim() && (
+        <MessageActions className="-ml-2 flex gap-0 opacity-0 transition-opacity group-hover:opacity-100">
+          <MessageAction tooltip={copied ? "Copied!" : "Copy text"} side="bottom">
+            <button className="hover:bg-accent/60 text-muted-foreground hover:text-foreground flex size-7.5 items-center justify-center rounded-full bg-transparent transition" aria-label="Copy text" onClick={copyToClipboard} type="button">
+              {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+            </button>
+          </MessageAction>
+          {isLast && (
+            <MessageAction tooltip="Regenerate" side="bottom" delayDuration={0}>
+              <button className="hover:bg-accent/60 text-muted-foreground hover:text-foreground flex size-7.5 items-center justify-center rounded-full bg-transparent transition" aria-label="Regenerate" onClick={onReload} type="button">
+                <ArrowClockwise className="size-4" />
               </button>
             </MessageAction>
-            {isLast && (
-              <MessageAction tooltip="Regenerate" side="bottom" delayDuration={0}>
-                <button className="hover:bg-accent/60 text-muted-foreground hover:text-foreground flex size-7.5 items-center justify-center rounded-full bg-transparent transition" aria-label="Regenerate" onClick={onReload} type="button">
-                  <ArrowClockwise className="size-4" />
-                </button>
-              </MessageAction>
-            )}
-          </MessageActions>
-        )}
+          )}
+        </MessageActions>
+      )}
     </Message>
   );
 }

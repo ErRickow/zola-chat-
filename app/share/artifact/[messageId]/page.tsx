@@ -1,9 +1,7 @@
 import { CodeArtifact } from "@/components/common/code-artifact";
 import { NeosantaraLogoText } from "@/components/icons/neosantara";
 import { APP_DOMAIN } from "@/lib/config";
-// CORRECTED IMPORT
 import type { Message } from "@/lib/chat-store/types";
-import type { ContentPart } from "@/app/types/api.types";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -19,6 +17,22 @@ async function getArtifact(messageId: string): Promise < Message | null > {
   }
 }
 
+const parseCodeBlockForPage = (markdown: string | null) => {
+  if (!markdown) return null;
+  const codeBlockRegex = /```(\w+)?\n([\s\S]+?)```/;
+  const match = markdown.match(codeBlockRegex);
+  if (match) {
+    const language = match[1] || 'plaintext';
+    const code = match[2].trim();
+    return {
+      language,
+      code,
+      title: `Generated ${language.charAt(0).toUpperCase() + language.slice(1)} Snippet`
+    };
+  }
+  return null;
+}
+
 export default async function ShareArtifactPage({
   params,
 }: {
@@ -26,13 +40,9 @@ export default async function ShareArtifactPage({
 }) {
   const { messageId } = await params;
   const message = await getArtifact(messageId);
+  const artifactInfo = parseCodeBlockForPage(message?.content);
   
-  // This line will now work because the imported 'Message' type has the 'parts' property.
-  const artifactPart = (Array.isArray(message?.parts) ?
-    message.parts.find((p: any) => p.type === "code_artifact") :
-    null) as(ContentPart & { code ? : string;title ? : string;language ? : string;documentId ? : string }) | null;
-  
-  if (!message || !artifactPart) {
+  if (!message || !artifactInfo) {
     return notFound();
   }
   
@@ -47,10 +57,11 @@ export default async function ShareArtifactPage({
           <CodeArtifact
             messageId={String(message.id)}
             chatId={message.chat_id as string}
-            documentId={artifactPart.documentId!}
-            title={artifactPart.title!}
-            language={artifactPart.language!}
-            code={artifactPart.code!}
+            documentId={`code-artifact-${message.id}`}
+            title={artifactInfo.title}
+            language={artifactInfo.language}
+            code={artifactInfo.code}
+            defaultExpanded={true}
           />
        </main>
        <footer className="text-muted-foreground mt-8 text-center text-sm">
