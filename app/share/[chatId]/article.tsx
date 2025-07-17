@@ -10,18 +10,7 @@ import Link from "next/link"
 import { Header } from "./header"
 
 // Perbarui tipe MessageType agar mencakup info pengguna
-type MessageType = Tables<"messages"> & {
-  id: string
-  users?: {
-    display_name: string | null
-    profile_image: string | null
-  } | null
-  senderInfo?: {
-    id: string | null
-    displayName: string | null
-    profileImage: string | null
-  } | null
-}
+type MessageType = Tables<"messages">
 
 type ArticleProps = {
   id: string
