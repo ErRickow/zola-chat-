@@ -1,9 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
+// Using the simplest, most standard signature for a route handler.
 export async function GET(
-  _request: NextRequest, // Using NextRequest for consistency
-  { params }: { params: { messageId: string } } // Corrected type, removing the Promise wrapper which is likely an error in the other file but we will follow the modern standard.
+  request: Request, // The first argument is the Request object.
+  { params }: { params: { messageId: string } } // The second argument contains params.
 ) {
   const { messageId } = params;
   
@@ -20,7 +21,7 @@ export async function GET(
     const { data: message, error } = await supabase
       .from("messages")
       .select("*, chats(public)")
-      .eq("id", Number(messageId)) // Assuming messageId is a number (SERIAL)
+      .eq("id", Number(messageId)) // Your 'id' column is a number (SERIAL)
       .single();
     
     if (error || !message) {

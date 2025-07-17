@@ -1,7 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/app/types/database.types";
 import type { Message, ContentPart } from "@/app/types/api.types";
-import { randomUUID } from "crypto";
+
+// CORRECTED IMPORT: Use the Web Crypto API which is available globally in modern Node.js and Edge runtimes.
+// This avoids module resolution issues during the Vercel build process.
+const crypto = globalThis.crypto;
 
 export async function saveFinalAssistantMessage(
   supabase: SupabaseClient<Database>,
@@ -26,11 +29,11 @@ export async function saveFinalAssistantMessage(
       const language = match[1] || 'plaintext';
       processedParts.push({
         type: 'code_artifact',
-        documentId: `code-artifact-${randomUUID()}`,
+        documentId: `code-artifact-${crypto.randomUUID()}`,
         title: `Generated ${language.charAt(0).toUpperCase() + language.slice(1)} Snippet`,
         language: language,
         code: match[2].trim(),
-      });
+      } as ContentPart); // Casting here for type safety
       lastIndex = codeBlockRegex.lastIndex;
     }
 
@@ -46,18 +49,18 @@ export async function saveFinalAssistantMessage(
     }
 
     for (const part of msg.content) {
-      if (part.type === 'text' && part.text) {
-        finalParts.push(...processTextForCodeArtifacts(part.text));
-      } else if (part.type === 'tool-invocation' && part.toolInvocation) {
-        const { toolCallId, state } = part.toolInvocation;
-        if (!toolCallId) continue;
-        const existing = toolMap.get(toolCallId);
-        if (state === 'result' || !existing) {
-          toolMap.set(toolCallId, part);
+        if (part.type === 'text' && part.text) {
+            finalParts.push(...processTextForCodeArtifacts(part.text));
+        } else if (part.type === 'tool-invocation' && part.toolInvocation) {
+            const { toolCallId, state } = part.toolInvocation;
+            if (!toolCallId) continue;
+            const existing = toolMap.get(toolCallId);
+            if (state === 'result' || !existing) {
+                toolMap.set(toolCallId, part);
+            }
+        } else if (part.type === 'reasoning') {
+            finalParts.push(part);
         }
-      } else if (part.type === 'reasoning') {
-        finalParts.push(part);
-      }
     }
   }
 
