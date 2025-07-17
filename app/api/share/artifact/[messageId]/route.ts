@@ -1,13 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
-// CORRECTED: The signature now matches the working dynamic routes.
+// Using the signature that matches your project's established pattern
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ messageId: string }> } 
 ) {
   try {
-    // We now `await` the params object because its type is a Promise.
     const { messageId } = await params;
 
     if (!messageId) {
@@ -19,24 +18,37 @@ export async function GET(
       return NextResponse.json({ error: "Database not available" }, { status: 500 });
     }
 
-    const { data: message, error } = await supabase
+    // --- CORRECTED LOGIC ---
+    // Query 1: Get the message itself
+    const { data: message, error: messageError } = await supabase
       .from("messages")
-      .select("*, chats(public)")
+      .select("*")
       .eq("id", Number(messageId))
       .single();
 
-    if (error || !message) {
+    if (messageError || !message) {
       return NextResponse.json({ error: "Artifact not found" }, { status: 404 });
     }
 
-    if (!message.chats?.public) {
+    // Query 2: Get the parent chat and check its public status
+    const { data: chat, error: chatError } = await supabase
+      .from("chats")
+      .select("public")
+      .eq("id", message.chat_id)
+      .single();
+      
+    if (chatError || !chat) {
+        return NextResponse.json({ error: "Parent chat not found" }, { status: 404 });
+    }
+
+    // Security check: Only allow access if the parent chat is public.
+    if (!chat.public) {
       return NextResponse.json({ error: "This content is not public" }, { status: 403 });
     }
     
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { chats, ...messageData } = message;
+    // Return only the message data, as intended.
+    return NextResponse.json(message);
 
-    return NextResponse.json(messageData);
   } catch (error) {
     console.error("Error fetching artifact:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
