@@ -11,6 +11,7 @@ import {
   validateAndTrackUsage,
 } from "./api"
 import { createErrorResponse, extractErrorMessage } from "./utils"
+import { getWheater, search } from "@/lib/tools"
 
 export const maxDuration = 60
 
@@ -93,7 +94,10 @@ export async function POST(req: Request) {
       model: modelConfig.apiSdk(apiKey, { enableSearch }),
      // system: effectiveSystemPrompt,
       messages: messages,
-      tools: {} as ToolSet,
+      tools: {
+        getWheater: getWheater,
+        search: search,
+      },
       maxSteps: 10,
       onError: (err: unknown) => {
         console.error("Streaming error occurred:", err)

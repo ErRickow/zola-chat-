@@ -13,6 +13,7 @@ import {
 } from "@phosphor-icons/react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useMemo, useState } from "react"
+import { Weather } from "./weather"
 
 interface ToolInvocationProps {
   toolInvocations: ToolInvocationUIPart[]
@@ -271,7 +272,20 @@ function SingleToolCard({
   const renderResults = () => {
     if (!parsedResult) return "No result data available"
 
-    // Handle array of items with url, title, and snippet (like search results)
+    // --- Penanganan Khusus untuk Tool 'getWeather' ---
+    if (toolName === 'getWeather' && parsedResult && typeof parsedResult === 'object' && 'current' in parsedResult) {
+      return <Weather weatherAtLocation={parsedResult as any} />; // Pastikan tipe data cocok
+    }
+
+   /* // --- Penanganan Khusus untuk Tool 'search' ---
+    // Asumsi hasil pencarian adalah array objek dengan title, url, snippet
+    if (toolName === 'search' && Array.isArray(parsedResult) && parsedResult.length > 0 &&
+        parsedResult[0] && typeof parsedResult[0] === 'object' && 'url' in parsedResult[0] && 'title' in parsedResult[0]) {
+      return <SearchResults results={parsedResult as any[]} />; // Pastikan tipe data cocok
+    }*/
+
+
+    // Handle array of items with url, title, and snippet (like search results) - ini bisa dihapus jika SearchResults sudah menangani
     if (Array.isArray(parsedResult) && parsedResult.length > 0) {
       // Check if items look like search results
       if (

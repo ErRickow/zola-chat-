@@ -97,6 +97,12 @@ export function MessageUser({
         className
       )}
     >
+      <MessageAvatar
+        src={loggedInUser?.profile_image || avatarSrc}
+        fallback={loggedInUser?.display_name?.charAt(0) || avatarFallback}
+        alt={loggedInUser?.display_name || avatarAlt}
+        className="ml-2"
+      />
       {attachments?.map((attachment, index) => (
         <div
           className="flex flex-row gap-2"
@@ -234,13 +240,6 @@ export function MessageUser({
           </button>
         </MessageAction>
       </MessageActions>
-      {/* Avatar di sisi kanan untuk user */}
-      <MessageAvatar
-        src={loggedInUser?.profile_image || avatarSrc}
-        fallback={loggedInUser?.display_name?.charAt(0) || avatarFallback}
-        alt={loggedInUser?.display_name || avatarAlt}
-        className="ml-2"
-      />
     </MessageContainer>
   )
 }
