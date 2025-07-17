@@ -24,6 +24,7 @@ type MessageType = Tables<"messages"> & {
 }
 
 type ArticleProps = {
+  id: string
   date: string
   title: string
   subtitle: string
