@@ -104,7 +104,6 @@ function CodeBlockCode({
           language={language}
           readOnly={true}
           theme={currentTheme}
-          className="h-full w-full" // Pastikan CodeMirrorEditor mengisi tinggi yang tersedia
         />
       </div>
       <div className="flex justify-between items-center bg-secondary p-3 border-t border-border flex-shrink-0"> {/* Tambah flex-shrink-0 */}

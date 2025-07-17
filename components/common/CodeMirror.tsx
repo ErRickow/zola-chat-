@@ -68,7 +68,7 @@ export function CodeMirrorEditor({ code, language, readOnly = true, onChange, th
         EditorView.editable.of(!readOnly),
         languageCompartment.current.of(memoizedGetLanguageExtension(language)),
         themeCompartment.current.of(memoizedGetThemeExtension(theme)),
-        EditorView.lineWrapping,
+        EditorView.scrollPastEnd,
         EditorView.updateListener.of((update) => {
           if (update.docChanged && onChange && !readOnly) {
             onChange(update.state.doc.toString());
