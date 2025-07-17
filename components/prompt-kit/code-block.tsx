@@ -5,14 +5,22 @@ import { useTheme } from "next-themes"
 import React, { useEffect, useState, useMemo } from "react"
 import { codeToHtml } from "shiki"
 import {
-  MorphingDialog,
-  MorphingDialogContainer,
-  MorphingDialogContent,
-  MorphingDialogTrigger,
-  MorphingDialogClose,
-} from "@/components/motion-primitives/morphing-dialog"
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from "@/components/ui/drawer"
 import { ButtonCopy } from "../common/button-copy"
 import { CodeMirrorEditor } from "../common/CodeMirror"
+import { useBreakpoint } from "@/app/hooks/use-breakpoint"
 
 export type CodeBlockProps = {
   children?: React.ReactNode
@@ -43,30 +51,17 @@ export type CodeBlockCodeProps = {
 
 function CodeBlockCode({
   code,
-  language = "plaintext", // Default language
-  theme: propTheme, // Rename propTheme to avoid conflict with useTheme's resolvedTheme
+  language = "plaintext",
   className,
   ...props
 }: CodeBlockCodeProps) {
   const { resolvedTheme: appTheme } = useTheme()
   const [highlightedHtml, setHighlightedHtml] = useState<string | null>(null)
-  const uniqueId = React.useId()
+  const [isModalOpen, setIsModalOpen] = useState(false); // State untuk mengontrol buka/tutup modal
+  const isMobile = useBreakpoint(768); // Deteksi mobile/desktop
 
   // Determine the theme for Shiki and CodeMirror
   const currentTheme = appTheme === "dark" ? "dark" : "light";
-
-  useEffect(() => {
-    async function highlight() {
-      // Use the resolved theme for Shiki highlighting
-      const shikiTheme = currentTheme === "dark" ? "github-dark" : "github-light";
-      const html = await codeToHtml(code, {
-        lang: language,
-        theme: shikiTheme,
-      });
-      setHighlightedHtml(html);
-    }
-    highlight();
-  }, [code, language, currentTheme]); // Re-run effect if code, language, or theme changes
 
   const extractLanguage = (className?: string): string => {
     if (!className) return "plaintext";
@@ -74,17 +69,55 @@ function CodeBlockCode({
     return match ? match[1] : "plaintext";
   };
 
-  const truncatedCode = useMemo(() => {
+  const MAX_PREVIEW_LINES = 5; // Define max lines for preview
+
+  // Buat kode pratinjau yang terpotong
+  const previewCode = useMemo(() => {
     const lines = code.split('\n');
-    if (lines.length > 5) { // Show only 5 lines for preview
-      return lines.slice(0, 5).join('\n') + '\n... (Click to expand)';
+    if (lines.length > MAX_PREVIEW_LINES) {
+      return lines.slice(0, MAX_PREVIEW_LINES).join('\n');
     }
     return code;
   }, [code]);
 
-  const classNames = cn(
-    "w-full overflow-x-auto text-[13px] [&>pre]:px-4 [&>pre]:py-4 [&>pre]:!bg-background",
-    className
+  // Tentukan apakah teks "Click to expand" harus ditampilkan
+  const showExpandText = code.split('\n').length > MAX_PREVIEW_LINES;
+
+  useEffect(() => {
+    async function highlight() {
+      const shikiTheme = currentTheme === "dark" ? "github-dark" : "github-light";
+      const html = await codeToHtml(previewCode, {
+        lang: language,
+        theme: shikiTheme,
+      });
+      setHighlightedHtml(html);
+    }
+    highlight();
+  }, [previewCode, language, currentTheme]);
+
+  const commonCodeBlockClasses = "w-full overflow-x-auto text-[13px] [&>pre]:px-4 [&>pre]:py-4 [&>pre]:!bg-background";
+
+  const modalContent = (
+    <>
+      <div className="flex justify-between items-center bg-secondary p-3 border-b border-border">
+        <span className="font-medium">{language} Code</span>
+        {/* Tombol close akan disediakan oleh Drawer/Dialog */}
+      </div>
+      {/* Kontainer untuk CodeMirror agar dapat digulir */}
+      <div className="flex-1 overflow-auto">
+        <CodeMirrorEditor
+          code={code}
+          language={language}
+          readOnly={true}
+          theme={currentTheme}
+        />
+      </div>
+      <div className="flex justify-between items-center bg-secondary p-3 border-t border-border">
+        <ButtonCopy code={code} /> {/* Hanya satu tombol salin, di dalam dialog */}
+        {/* Anda bisa menambahkan tombol share di sini jika diperlukan */}
+        {/* <Button variant="outline" size="sm">Share</Button> */}
+      </div>
+    </>
   );
 
   return (
@@ -93,49 +126,57 @@ function CodeBlockCode({
         <div className="text-muted-foreground py-1 pr-2 font-mono text-xs">
           {language}
         </div>
-        {/* Tombol Copy untuk pratinjau, menyalin seluruh kode */}
-        <ButtonCopy code={code} />
       </CodeBlockGroup>
 
-      {/* MorphingDialog untuk menampilkan CodeMirror */}
-      <MorphingDialog transition={{ type: "spring", stiffness: 280, damping: 18, mass: 0.3 }}>
-        <MorphingDialogTrigger className="w-full text-left p-0">
-          {/* Tampilan pratinjau yang akan diklik */}
-          <div
-            className={classNames}
-            dangerouslySetInnerHTML={{ __html: highlightedHtml || `<pre><code>${truncatedCode}</code></pre>` }}
-            {...props}
-          />
-          {code.split('\n').length > 5 && (
-            <div className="text-muted-foreground text-center text-xs pt-2 pb-2 cursor-pointer hover:underline">
-              Click to view full code
-            </div>
-          )}
-        </MorphingDialogTrigger>
-
-        <MorphingDialogContainer>
-          <MorphingDialogContent className="w-[90vw] h-[80vh] max-w-4xl p-0 flex flex-col rounded-lg overflow-hidden">
-            <div className="flex justify-between items-center bg-secondary p-3 border-b border-border">
-              <span className="font-medium">{language} Code</span>
-              <MorphingDialogClose className="static top-auto right-auto p-1 rounded-full hover:bg-accent" />
-            </div>
-            <div className="flex-1 overflow-hidden"> {/* Use overflow-hidden here */}
-              {/* Menggunakan komponen CodeMirrorEditor */}
-              <CodeMirrorEditor
-                code={code}
-                language={language}
-                readOnly={true}
-                theme={currentTheme}
+      {isMobile ? (
+        <Drawer open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DrawerTrigger asChild>
+            <div className="w-full text-left p-0 cursor-pointer" onClick={() => setIsModalOpen(true)}>
+              <div
+                className={commonCodeBlockClasses}
+                dangerouslySetInnerHTML={{ __html: highlightedHtml || `<pre><code>${previewCode}</code></pre>` }}
+                {...props}
               />
+              {showExpandText && (
+                <div className="text-muted-foreground text-center text-xs pt-2 pb-2 hover:underline">
+                  Click to view full code
+                </div>
+              )}
             </div>
-            <div className="flex justify-between items-center bg-secondary p-3 border-t border-border">
-              <ButtonCopy code={code} />
-              {/* @TODO */}
-              {/* <Button variant="outline" size="sm">Share</Button> */}
+          </DrawerTrigger>
+          <DrawerContent className="w-full h-dvh max-h-[90vh] flex flex-col rounded-t-lg overflow-hidden">
+            <DrawerHeader className="sr-only">
+              <DrawerTitle>{language} Code</DrawerTitle>
+              <DrawerDescription>View and copy the full code block.</DrawerDescription>
+            </DrawerHeader>
+            {modalContent}
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogTrigger asChild>
+            <div className="w-full text-left p-0 cursor-pointer" onClick={() => setIsModalOpen(true)}>
+              <div
+                className={commonCodeBlockClasses}
+                dangerouslySetInnerHTML={{ __html: highlightedHtml || `<pre><code>${previewCode}</code></pre>` }}
+                {...props}
+              />
+              {showExpandText && (
+                <div className="text-muted-foreground text-center text-xs pt-2 pb-2 hover:underline">
+                  Click to view full code
+                </div>
+              )}
             </div>
-          </MorphingDialogContent>
-        </MorphingDialogContainer>
-      </MorphingDialog>
+          </DialogTrigger>
+          <DialogContent className="w-[90vw] h-[80vh] max-w-4xl p-0 flex flex-col rounded-lg overflow-hidden">
+            <DialogHeader className="sr-only">
+              <DialogTitle>{language} Code</DialogTitle>
+              <DialogDescription>View and copy the full code block.</DialogDescription>
+            </DialogHeader>
+            {modalContent}
+          </DialogContent>
+        </Dialog>
+      )}
     </CodeBlock>
   );
 }
