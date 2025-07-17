@@ -1,8 +1,9 @@
-import type { ContentPart, Message } from "@/app/types/api.types"
-import type { Database, Json } from "@/app/types/database.types"
-import type { SupabaseClient } from "@supabase/supabase-js"
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database, Json } from "@/app/types/database.types";
+import type { Message, ContentPart } from "@/app/types/api.types";
 
-const DEFAULT_STEP = 0
+// Note: In Node.js environments (like this API route), 'crypto' is a built-in module.
+import { randomUUID } from "crypto";
 
 export async function saveFinalAssistantMessage(
   supabase: SupabaseClient<Database>,
@@ -11,82 +12,91 @@ export async function saveFinalAssistantMessage(
   message_group_id?: string,
   model?: string
 ) {
-  const parts: ContentPart[] = []
-  const toolMap = new Map<string, ContentPart>()
-  const textParts: string[] = []
+  const finalParts: ContentPart[] = [];
+  const toolMap = new Map<string, ContentPart>();
+
+  const processTextForCodeArtifacts = (text: string) => {
+    const codeBlockRegex = /```(\w+)?\n([\s\S]+?)```/g;
+    let lastIndex = 0;
+    let match;
+    const textParts: { type: 'text' | 'code_artifact', content: any }[] = [];
+
+    while ((match = codeBlockRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        textParts.push({ type: 'text', content: text.substring(lastIndex, match.index) });
+      }
+      
+      const language = match[1] || 'plaintext';
+      textParts.push({
+        type: 'code_artifact',
+        content: {
+          documentId: `code-artifact-${randomUUID()}`,
+          title: `Generated ${language.charAt(0).toUpperCase() + language.slice(1)} Snippet`,
+          language: language,
+          code: match[2].trim(),
+        }
+      });
+      lastIndex = codeBlockRegex.lastIndex;
+    }
+
+    if (lastIndex < text.length) {
+      textParts.push({ type: 'text', content: text.substring(lastIndex) });
+    }
+    
+    return textParts;
+  }
 
   for (const msg of messages) {
-    if (msg.role === "assistant" && Array.isArray(msg.content)) {
-      for (const part of msg.content) {
-        if (part.type === "text") {
-          textParts.push(part.text || "")
-          parts.push(part)
-        } else if (part.type === "tool-invocation" && part.toolInvocation) {
-          const { toolCallId, state } = part.toolInvocation
-          if (!toolCallId) continue
+    if (msg.role !== 'assistant' || !Array.isArray(msg.content)) {
+      continue;
+    }
 
-          const existing = toolMap.get(toolCallId)
-          if (state === "result" || !existing) {
-            toolMap.set(toolCallId, {
-              ...part,
-              toolInvocation: {
-                ...part.toolInvocation,
-                args: part.toolInvocation?.args || {},
-              },
-            })
+    for (const part of msg.content) {
+      if (part.type === 'text' && part.text) {
+        const processedSubParts = processTextForCodeArtifacts(part.text);
+        for (const subPart of processedSubParts) {
+          if (subPart.type === 'text') {
+            finalParts.push({ type: 'text', text: subPart.content });
+          } else if (subPart.type === 'code_artifact') {
+            finalParts.push({ ...subPart.content, type: 'code_artifact' });
           }
-        } else if (part.type === "reasoning") {
-          parts.push({
-            type: "reasoning",
-            reasoning: part.text || "",
-            details: [
-              {
-                type: "text",
-                text: part.text || "",
-              },
-            ],
-          })
-        } else if (part.type === "step-start") {
-          parts.push(part)
         }
-      }
-    } else if (msg.role === "tool" && Array.isArray(msg.content)) {
-      for (const part of msg.content) {
-        if (part.type === "tool-result") {
-          const toolCallId = part.toolCallId || ""
-          toolMap.set(toolCallId, {
-            type: "tool-invocation",
-            toolInvocation: {
-              state: "result",
-              step: DEFAULT_STEP,
-              toolCallId,
-              toolName: part.toolName || "",
-              result: part.result,
-            },
-          })
+      } else if (part.type === 'tool-invocation' && part.toolInvocation) {
+        const { toolCallId, state } = part.toolInvocation;
+        if (!toolCallId) continue;
+        const existing = toolMap.get(toolCallId);
+        if (state === 'result' || !existing) {
+          toolMap.set(toolCallId, part);
         }
+      } else if (part.type === 'reasoning') {
+        finalParts.push(part);
       }
     }
   }
 
-  // Merge tool parts at the end
-  parts.push(...toolMap.values())
+  const allParts = [...finalParts, ...Array.from(toolMap.values())];
 
-  const finalPlainText = textParts.join("\n\n")
+  const finalPlainText = allParts
+    .map(p => {
+      if (p.type === 'text') return p.text;
+      if (p.type === 'code_artifact') return `[Code: ${p.title}]`;
+      if (p.type === 'tool-invocation') return `[Tool call: ${p.toolInvocation?.toolName}]`;
+      if (p.type === 'reasoning') return `[Reasoning]`;
+      return '';
+    })
+    .join(' ').trim();
 
   const { error } = await supabase.from("messages").insert({
     chat_id: chatId,
     role: "assistant",
-    content: finalPlainText || "",
-    parts: parts as unknown as Json,
+    content: finalPlainText || "Assistant message",
+    parts: allParts.length > 0 ? (allParts as unknown as Json) : null,
     message_group_id,
     model,
-  })
+  });
 
   if (error) {
-    console.error("Error saving final assistant message:", error)
-    throw new Error(`Failed to save assistant message: ${error.message}`)
-  } else {
-    console.log("Assistant message saved successfully (merged).")
+    console.error("Error saving final assistant message:", error);
+    throw new Error(`Failed to save assistant message: ${error.message}`);
   }
 }
