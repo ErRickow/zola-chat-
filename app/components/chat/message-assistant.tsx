@@ -1,20 +1,20 @@
 "use client";
 
-import { Message, MessageContent, MessageAction, MessageActions } from "@/components/prompt-kit/message";
+import { Message, MessageAction, MessageActions, MessageContent } from "@/components/prompt-kit/message";
 import { useUserPreferences } from "@/lib/user-preference-store/provider";
 import { cn } from "@/lib/utils";
-import type { Message as MessageAISDK } from "@ai-sdk/react";
+import type { Message as MessageAISDK, UISticker } from "@ai-sdk/react";
 import { ArrowClockwise, Check, Copy } from "@phosphor-icons/react";
 import { useChatSession } from "@/lib/chat-store/session/provider";
+import { CodeArtifact } from "@/components/common/code-artifact";
 import { getSources } from "./get-sources";
 import { Reasoning } from "./reasoning";
 import { SearchImages } from "./search-images";
 import { SourcesList } from "./sources-list";
 import { ToolInvocation } from "./tool-invocation";
-import { CodeArtifact } from "@/components/common/code-artifact";
 
 type MessageAssistantProps = {
-  children: string;
+  children: string; // The raw markdown content, used for copy-pasting and as a fallback
   id: string;
   isLast ? : boolean;
   hasScrollAnchor ? : boolean;
@@ -43,29 +43,37 @@ export function MessageAssistant({
   
   const sources = getSources(parts);
   const toolInvocationParts = parts?.filter(
-    (part) => part.type === "tool-invocation"
+    (part): part is UISticker => part.type === "tool-invocation"
   );
   const searchImageResults =
     parts
     ?.filter(
-      (part) =>
+      (part: any) =>
       part.type === "tool-invocation" &&
       part.toolInvocation?.state === "result" &&
-      part.toolInvocation?.toolName === "imageSearch" &&
-      part.toolInvocation?.result?.content?.[0]?.type === "images"
+      part.toolInvocation?.toolName === "imageSearch"
     )
     .flatMap((part: any) => part.toolInvocation?.result?.content?.[0]?.results ?? []) ?? [];
   
-  const hasContent = (parts && parts.length > 0) || (children && children.trim() !== "");
   const isLastStreaming = status === 'streaming' && isLast;
   
+  // This function decides what to render based on the `parts` data.
   const renderContent = () => {
+    // Priority 1: If structured `parts` data exists, render it.
     if (parts && Array.isArray(parts) && parts.length > 0) {
-      const contentParts = parts.filter(part => part.type !== 'tool-invocation' && part.type !== 'source');
+      const contentParts = parts.filter(
+        (part) => part.type !== "tool-invocation" && part.type !== "source"
+      );
+      
       return contentParts.map((part: any, index: number) => {
         switch (part.type) {
           case 'text':
-            return <MessageContent key={index} markdown={true} className="bg-transparent p-0">{part.text}</MessageContent>;
+            return part.text && part.text.trim() ? (
+              <MessageContent key={index} markdown={true} className="w-full bg-transparent p-0">
+                {part.text}
+              </MessageContent>
+            ) : null;
+            
           case 'code_artifact':
             return (
               <CodeArtifact
@@ -76,34 +84,48 @@ export function MessageAssistant({
                 title={part.title}
                 language={part.language}
                 code={part.code}
-                isLoading={status === 'streaming' && isLast}
+                isLoading={isLastStreaming}
               />
             );
+            
           case 'reasoning':
             return <Reasoning key={index} reasoning={part.reasoning} isStreaming={status === 'streaming'} />;
+            
           default:
             return null;
         }
       });
     }
+    
+    // Priority 2: Fallback to rendering the raw `children` string if `parts` is not available.
     if (children && children.trim() !== "") {
       return <MessageContent markdown={true}>{children}</MessageContent>;
     }
+    
     return null;
   };
   
+  const hasVisibleContent = (parts && parts.some(p => p.type === 'text' || p.type === 'code_artifact')) || (children && children.trim() !== '');
+  
   return (
     <Message
-      className={cn("group flex w-full max-w-3xl flex-1 flex-col items-start gap-4 px-6 pb-2", hasScrollAnchor && "min-h-scroll-anchor", className)}
+      className={cn("group flex w-full max-w-3xl flex-col items-start gap-2 px-6 pb-2", hasScrollAnchor && "min-h-scroll-anchor", className)}
     >
-      <div className={cn("flex min-w-full flex-col gap-4", isLast && "pb-8")}>
         {preferences.showToolInvocations && toolInvocationParts && toolInvocationParts.length > 0 && (
-          <ToolInvocation toolInvocations={toolInvocationParts} />
+          <div className="w-full">
+            <ToolInvocation toolInvocations={toolInvocationParts} />
+          </div>
         )}
+
         {searchImageResults.length > 0 && <SearchImages results={searchImageResults} />}
-        {renderContent()}
+        
+        <div className="flex w-full flex-col gap-4">
+            {renderContent()}
+        </div>
+
         {sources && sources.length > 0 && <SourcesList sources={sources} />}
-        {!isLastStreaming && hasContent && (
+
+        {!isLastStreaming && hasVisibleContent && (
           <MessageActions className="-ml-2 flex gap-0 opacity-0 transition-opacity group-hover:opacity-100">
             <MessageAction tooltip={copied ? "Copied!" : "Copy text"} side="bottom">
               <button className="hover:bg-accent/60 text-muted-foreground hover:text-foreground flex size-7.5 items-center justify-center rounded-full bg-transparent transition" aria-label="Copy text" onClick={copyToClipboard} type="button">
@@ -119,7 +141,6 @@ export function MessageAssistant({
             )}
           </MessageActions>
         )}
-      </div>
     </Message>
   );
 }
