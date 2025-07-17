@@ -3,7 +3,7 @@
 import { Message, MessageAction, MessageActions, MessageContent } from "@/components/prompt-kit/message";
 import { useUserPreferences } from "@/lib/user-preference-store/provider";
 import { cn } from "@/lib/utils";
-import type { Message as MessageAISDK, UIPart } from "@ai-sdk/react";
+import type { Message as MessageAISDK } from "@ai-sdk/react";
 import type { ToolInvocationUIPart } from "@ai-sdk/ui-utils"; // CORRECTED: Import the correct type
 import { ArrowClockwise, Check, Copy } from "@phosphor-icons/react";
 import { useChatSession } from "@/lib/chat-store/session/provider";
@@ -15,7 +15,8 @@ import { SourcesList } from "./sources-list";
 import { ToolInvocation } from "./tool-invocation";
 
 // CORRECTED TYPE DEFINITION:
-// We define our custom artifact part and then create a union type.
+// We define our custom artifact part and then create a union type with the base UIPart from the SDK.
+// This correctly tells TypeScript about our custom 'code_artifact' type.
 type CodeArtifactPart = {
   type: 'code_artifact';
   documentId: string;
@@ -23,7 +24,9 @@ type CodeArtifactPart = {
   language: string;
   code: string;
 };
-type ExtendedUIPart = UIPart | CodeArtifactPart;
+// Use the actual exported type for a single part from the SDK if available, or a fallback.
+type ExtendedUIPart = MessageAISDK['parts'] extends(infer U)[] ? U | CodeArtifactPart : CodeArtifactPart;
+
 
 type MessageAssistantProps = {
   children: string; // The raw markdown content, used as a fallback
@@ -69,7 +72,6 @@ export function MessageAssistant({
   
   const isLastStreaming = status === 'streaming' && isLast;
   
-  // Cast the incoming `parts` array to our new extended type.
   const allParts = (parts || []) as ExtendedUIPart[];
   
   const renderContent = () => {
