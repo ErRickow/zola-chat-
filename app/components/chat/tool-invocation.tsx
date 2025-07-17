@@ -13,7 +13,7 @@ import {
 } from "@phosphor-icons/react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useMemo, useState } from "react"
-import { Weather } from "./weather"
+import { Weather } from "./weater"
 
 interface ToolInvocationProps {
   toolInvocations: ToolInvocationUIPart[]
