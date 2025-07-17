@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { EditorView } from '@codemirror/view';
 import { EditorState, Compartment } from '@codemirror/state';
 import { basicSetup } from 'codemirror';
@@ -6,7 +6,6 @@ import { javascript } from '@codemirror/lang-javascript';
 import { html } from '@codemirror/lang-html';
 import { css } from '@codemirror/lang-css';
 import { oneDark } from '@codemirror/theme-one-dark';
-import { StreamLanguage } from '@codemirror/language';
 import { python } from '@codemirror/lang-python';
 
 interface CodeMirrorEditorProps {
@@ -17,56 +16,59 @@ interface CodeMirrorEditorProps {
   theme?: 'light' | 'dark';
 }
 
+const getLanguageExtension = (lang: string) => {
+  switch (lang) {
+    case 'javascript':
+    case 'js':
+      return javascript();
+    case 'typescript':
+    case 'ts':
+    case 'tsx':
+      return javascript({ jsx: true, typescript: true });
+    case 'html':
+    case 'htm':
+      return html();
+    case 'css':
+      return css();
+    case 'python':
+    case 'py':
+      return python();
+    case 'json':
+      return javascript({ jsx: false, typescript: false });
+    case 'yaml':
+    case 'yml':
+      return [];
+    default:
+      return [];
+  }
+};
+
+const getThemeExtension = (currentTheme: string) => {
+  return currentTheme === 'dark' ? oneDark : EditorView.baseTheme({});
+};
+
 export function CodeMirrorEditor({ code, language, readOnly = true, onChange, theme = 'dark' }: CodeMirrorEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const languageCompartment = useRef(new Compartment());
   const themeCompartment = useRef(new Compartment());
   const [editorView, setEditorView] = useState<EditorView | null>(null);
 
+  // Gunakan useCallback untuk memoize fungsi agar tidak dibuat ulang setiap render
+  const memoizedGetLanguageExtension = useCallback(getLanguageExtension, []);
+  const memoizedGetThemeExtension = useCallback(getThemeExtension, []);
+
+
   useEffect(() => {
     if (!editorRef.current) return;
-
-    const getLanguageExtension = (lang: string) => {
-      switch (lang) {
-        case 'javascript':
-        case 'js':
-          return javascript();
-        case 'typescript':
-        case 'ts':
-        case 'tsx':
-          return javascript({ jsx: true, typescript: true });
-        case 'html':
-        case 'htm':
-          return html();
-        case 'css':
-          return css();
-        case 'python':
-        case 'py':
-          return python();
-        case 'json':
-          // CodeMirror 6 tidak memiliki lang-json bawaan, bisa pakai lang-javascript dengan mode json
-          // Atau cari ekstensi json pihak ketiga seperti @codemirror/lang-json
-          return javascript({ jsx: false, typescript: false });
-        case 'yaml':
-        case 'yml':
-          // Tidak ada ekstensi bawaan, bisa pakai plaintext atau cari pihak ketiga
-          return [];
-        default:
-          return [];
-      }
-    };
-
-    const getThemeExtension = (currentTheme: string) => {
-      return currentTheme === 'dark' ? oneDark : EditorView.baseTheme({});
-    };
 
     const startState = EditorState.create({
       doc: code,
       extensions: [
-        basicSetup, // Gunakan basicSetup dari 'codemirror'
+        basicSetup,
         EditorView.editable.of(!readOnly),
-        languageCompartment.current.of(getLanguageExtension(language)),
-        themeCompartment.current.of(getThemeExtension(theme)),
+        languageCompartment.current.of(memoizedGetLanguageExtension(language)),
+        themeCompartment.current.of(memoizedGetThemeExtension(theme)),
+        EditorView.lineWrapping,
         EditorView.updateListener.of((update) => {
           if (update.docChanged && onChange && !readOnly) {
             onChange(update.state.doc.toString());
@@ -86,7 +88,7 @@ export function CodeMirrorEditor({ code, language, readOnly = true, onChange, th
       view.destroy();
       setEditorView(null);
     };
-  }, []); // Hanya inisialisasi sekali saat mount
+  }, []); // Dependensi kosong agar hanya dijalankan sekali
 
   // Efek untuk memperbarui kode jika prop 'code' berubah dari luar
   useEffect(() => {
@@ -101,19 +103,19 @@ export function CodeMirrorEditor({ code, language, readOnly = true, onChange, th
   useEffect(() => {
     if (editorView) {
       editorView.dispatch({
-        effects: languageCompartment.current.reconfigure(getLanguageExtension(language)),
+        effects: languageCompartment.current.reconfigure(memoizedGetLanguageExtension(language)),
       });
     }
-  }, [language, editorView]);
+  }, [language, editorView, memoizedGetLanguageExtension]);
 
   // Efek untuk memperbarui tema jika prop 'theme' berubah
   useEffect(() => {
     if (editorView) {
       editorView.dispatch({
-        effects: themeCompartment.current.reconfigure(getThemeExtension(theme)),
+        effects: themeCompartment.current.reconfigure(memoizedGetThemeExtension(theme)),
       });
     }
-  }, [theme, editorView]);
+  }, [theme, editorView, memoizedGetThemeExtension]);
 
   return (
     <div
