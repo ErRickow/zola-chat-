@@ -13,13 +13,13 @@ export const dynamic = "force-static"
 export async function generateMetadata({
   params,
 }: {
-  params: { chatId: string }
+  params: Promise<{ chatId: string }>
 }): Promise<Metadata> {
   if (!isSupabaseEnabled) {
     return notFound()
   }
 
-  const { chatId } = params
+  const { chatId } = await params
   const supabase = await createClient()
 
   if (!supabase) {
@@ -87,13 +87,13 @@ function LoadingSkeleton() {
 export default async function ShareChat({
   params,
 }: {
-  params: { chatId: string }
+  params: Promise<{ chatId: string }>
 }) {
   if (!isSupabaseEnabled) {
     return notFound()
   }
 
-  const { chatId } = params 
+  const { chatId } = await params 
   const supabase = await createClient()
 
   if (!supabase) {
