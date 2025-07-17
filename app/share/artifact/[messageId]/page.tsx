@@ -1,11 +1,11 @@
-import { CodeArtifact } from "@/components/common/code-artifact";
+import { CodeArtifact } from "@/app/components/common/code-artifact";
 import { NeosantaraLogoText } from "@/components/icons/neosantara";
 import { APP_DOMAIN } from "@/lib/config";
-import { Message, ContentPart } from "@/app/types/api.types";
+import type { Message, ContentPart } from "@/app/types/api.types";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-async function getArtifact(messageId: string): Promise < Message | null > {
+async function getArtifact(messageId: string): Promise<Message | null> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : APP_DOMAIN;
     const res = await fetch(`${baseUrl}/api/share/artifact/${messageId}`);
@@ -17,17 +17,20 @@ async function getArtifact(messageId: string): Promise < Message | null > {
   }
 }
 
+// CORRECTED: The props for the page component now match your project's pattern.
 export default async function ShareArtifactPage({
   params,
 }: {
-  params: { messageId: string };
+  params: Promise<{ messageId: string }>;
 }) {
-  const message = await getArtifact(params.messageId);
-  
-  const artifactPart = (Array.isArray(message?.parts) ?
-    message.parts.find((p: any) => p.type === "code_artifact") :
-    null) as(ContentPart & { code ? : string;title ? : string;language ? : string;documentId ? : string }) | null;
-  
+  // We now `await` the params object to get the messageId.
+  const { messageId } = await params;
+  const message = await getArtifact(messageId);
+
+  const artifactPart = (Array.isArray(message?.parts)
+    ? message.parts.find((p: any) => p.type === "code_artifact")
+    : null) as (ContentPart & { code?: string; title?: string; language?: string; documentId?: string }) | null;
+
   if (!message || !artifactPart) {
     return notFound();
   }

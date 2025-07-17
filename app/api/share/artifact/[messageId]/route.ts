@@ -1,14 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
-// CORRECTED: Replicating the unusual signature from your working project routes.
-// The key is wrapping the params type in a Promise.
+// CORRECTED: The signature now matches the working dynamic routes.
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ messageId: string }> } 
 ) {
   try {
-    // We now need to await the params object.
+    // We now `await` the params object because its type is a Promise.
     const { messageId } = await params;
 
     if (!messageId) {
@@ -23,14 +22,13 @@ export async function GET(
     const { data: message, error } = await supabase
       .from("messages")
       .select("*, chats(public)")
-      .eq("id", Number(messageId)) // Your 'id' column is a number, so we cast it.
+      .eq("id", Number(messageId))
       .single();
 
     if (error || !message) {
       return NextResponse.json({ error: "Artifact not found" }, { status: 404 });
     }
 
-    // Security check: Only allow access if the parent chat is public.
     if (!message.chats?.public) {
       return NextResponse.json({ error: "This content is not public" }, { status: 403 });
     }
