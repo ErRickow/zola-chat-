@@ -11,7 +11,7 @@ import {
   validateAndTrackUsage,
 } from "./api"
 import { createErrorResponse, extractErrorMessage } from "./utils"
-import { getWheater, search } from "@/lib/tools"
+import { getWeather, search } from "@/lib/tools"
 
 export const maxDuration = 60
 
