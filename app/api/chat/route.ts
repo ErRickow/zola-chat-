@@ -95,7 +95,7 @@ export async function POST(req: Request) {
      // system: effectiveSystemPrompt,
       messages: messages,
       tools: {
-        getWheater: getWheater,
+        getWeather: getWeather,
         search: search,
       },
       maxSteps: 10,
