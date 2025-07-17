@@ -1,8 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/app/types/database.types";
 import type { Message, ContentPart } from "@/app/types/api.types";
-
-// Note: In Node.js environments (like this API route), 'crypto' is a built-in module.
 import { randomUUID } from "crypto";
 
 export async function saveFinalAssistantMessage(
@@ -19,31 +17,27 @@ export async function saveFinalAssistantMessage(
     const codeBlockRegex = /```(\w+)?\n([\s\S]+?)```/g;
     let lastIndex = 0;
     let match;
-    const textParts: { type: 'text' | 'code_artifact', content: any }[] = [];
+    const processedParts: ContentPart[] = [];
 
     while ((match = codeBlockRegex.exec(text)) !== null) {
       if (match.index > lastIndex) {
-        textParts.push({ type: 'text', content: text.substring(lastIndex, match.index) });
+        processedParts.push({ type: 'text', text: text.substring(lastIndex, match.index) });
       }
-      
       const language = match[1] || 'plaintext';
-      textParts.push({
+      processedParts.push({
         type: 'code_artifact',
-        content: {
-          documentId: `code-artifact-${randomUUID()}`,
-          title: `Generated ${language.charAt(0).toUpperCase() + language.slice(1)} Snippet`,
-          language: language,
-          code: match[2].trim(),
-        }
+        documentId: `code-artifact-${randomUUID()}`,
+        title: `Generated ${language.charAt(0).toUpperCase() + language.slice(1)} Snippet`,
+        language: language,
+        code: match[2].trim(),
       });
       lastIndex = codeBlockRegex.lastIndex;
     }
 
     if (lastIndex < text.length) {
-      textParts.push({ type: 'text', content: text.substring(lastIndex) });
+      processedParts.push({ type: 'text', text: text.substring(lastIndex) });
     }
-    
-    return textParts;
+    return processedParts;
   }
 
   for (const msg of messages) {
@@ -53,14 +47,7 @@ export async function saveFinalAssistantMessage(
 
     for (const part of msg.content) {
       if (part.type === 'text' && part.text) {
-        const processedSubParts = processTextForCodeArtifacts(part.text);
-        for (const subPart of processedSubParts) {
-          if (subPart.type === 'text') {
-            finalParts.push({ type: 'text', text: subPart.content });
-          } else if (subPart.type === 'code_artifact') {
-            finalParts.push({ ...subPart.content, type: 'code_artifact' });
-          }
-        }
+        finalParts.push(...processTextForCodeArtifacts(part.text));
       } else if (part.type === 'tool-invocation' && part.toolInvocation) {
         const { toolCallId, state } = part.toolInvocation;
         if (!toolCallId) continue;
@@ -75,11 +62,10 @@ export async function saveFinalAssistantMessage(
   }
 
   const allParts = [...finalParts, ...Array.from(toolMap.values())];
-
   const finalPlainText = allParts
     .map(p => {
       if (p.type === 'text') return p.text;
-      if (p.type === 'code_artifact') return `[Code: ${p.title}]`;
+      if (p.type === 'code_artifact') return `[Code: ${(p as any).title}]`;
       if (p.type === 'tool-invocation') return `[Tool call: ${p.toolInvocation?.toolName}]`;
       if (p.type === 'reasoning') return `[Reasoning]`;
       return '';
