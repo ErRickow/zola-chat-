@@ -3,7 +3,8 @@
 import { Message, MessageAction, MessageActions, MessageContent } from "@/components/prompt-kit/message";
 import { useUserPreferences } from "@/lib/user-preference-store/provider";
 import { cn } from "@/lib/utils";
-import type { Message as MessageAISDK, ToolInvocationUIPart, UIPart } from "@ai-sdk/react";
+import type { Message as MessageAISDK } from "@ai-sdk/react";
+import type { ToolInvocationUIPart, UIPart } from "@ai-sdk/ui-utils"; // CORRECTED: Import the correct type
 import { ArrowClockwise, Check, Copy } from "@phosphor-icons/react";
 import { useChatSession } from "@/lib/chat-store/session/provider";
 import { CodeArtifact } from "@/components/common/code-artifact";
