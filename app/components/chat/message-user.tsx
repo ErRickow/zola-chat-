@@ -13,6 +13,7 @@ import {
   MessageActions,
   Message as MessageContainer,
   MessageContent,
+  MessageAvatar,
 } from "@/components/prompt-kit/message"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -20,6 +21,7 @@ import { Message as MessageType } from "@ai-sdk/react"
 import { Check, Copy, Trash } from "@phosphor-icons/react"
 import Image from "next/image"
 import { useRef, useState } from "react"
+import { useUser } from "@/lib/user-store/provider"
 
 const getTextFromDataUrl = (dataUrl: string) => {
   const base64 = dataUrl.split(",")[1]
@@ -32,11 +34,16 @@ export type MessageUserProps = {
   children: string
   copied: boolean
   copyToClipboard: () => void
-  onEdit: (id: string, newText: string) => void
-  onReload: () => void
-  onDelete: (id: string) => void
+  onEdit?: (id: string, newText: string) => void
+  onReload?: () => void
+  onDelete?: (id: string) => void
   id: string
   className?: string
+  senderInfo?: { // Properti baru untuk info pengirim
+    id: string | null
+    displayName: string | null
+    profileImage: string | null
+  } | null
 }
 
 export function MessageUser({
@@ -50,10 +57,12 @@ export function MessageUser({
   onDelete,
   id,
   className,
+  senderInfo,
 }: MessageUserProps) {
   const [editInput, setEditInput] = useState(children)
   const [isEditing, setIsEditing] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
+  const { user: loggedInUser } = useUser()
 
   const handleEditCancel = () => {
     setIsEditing(false)
@@ -64,13 +73,21 @@ export function MessageUser({
     if (onEdit) {
       onEdit(id, editInput)
     }
-    onReload()
+    if (onReload) { 
+      onReload()
+    }
     setIsEditing(false)
   }
 
   const handleDelete = () => {
-    onDelete(id)
+    if (onDelete) { 
+      onDelete(id)
+    }
   }
+
+  const avatarSrc = senderInfo?.profileImage || `https://avatar.vercel.sh/${senderInfo?.id || senderInfo?.displayName || 'user'}`;
+  const avatarFallback = senderInfo?.displayName?.charAt(0) || "U";
+  const avatarAlt = senderInfo?.displayName || "User";
 
   return (
     <MessageContainer
@@ -217,6 +234,13 @@ export function MessageUser({
           </button>
         </MessageAction>
       </MessageActions>
+      {/* Avatar di sisi kanan untuk user */}
+      <MessageAvatar
+        src={loggedInUser?.profile_image || avatarSrc}
+        fallback={loggedInUser?.display_name?.charAt(0) || avatarFallback}
+        alt={loggedInUser?.display_name || avatarAlt}
+        className="ml-2"
+      />
     </MessageContainer>
   )
 }

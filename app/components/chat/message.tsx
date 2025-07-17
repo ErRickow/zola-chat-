@@ -9,13 +9,19 @@ type MessageProps = {
   id: string
   attachments?: MessageType["experimental_attachments"]
   isLast?: boolean
-  onDelete: (id: string) => void
-  onEdit: (id: string, newText: string) => void
-  onReload: () => void
+  onDelete?: (id: string) => void
+  onEdit?: (id: string, newText: string) => void 
+  onReload?: () => void 
   hasScrollAnchor?: boolean
   parts?: MessageType["parts"]
   status?: "streaming" | "ready" | "submitted" | "error"
   className?: string
+  // Tambahkan properti baru untuk info pengirim
+  senderInfo?: {
+    id: string | null
+    displayName: string | null
+    profileImage: string | null
+  } | null
 }
 
 export function Message({
@@ -31,6 +37,7 @@ export function Message({
   parts,
   status,
   className,
+  senderInfo, // Terima properti baru
 }: MessageProps) {
   const [copied, setCopied] = useState(false)
 
@@ -52,6 +59,7 @@ export function Message({
         hasScrollAnchor={hasScrollAnchor}
         attachments={attachments}
         className={className}
+        senderInfo={senderInfo}
       >
         {children}
       </MessageUser>

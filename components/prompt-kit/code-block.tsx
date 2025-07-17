@@ -2,15 +2,15 @@
 
 import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
-import React, { useEffect, useState, useMemo } from "react"
-import { codeToHtml } from "shiki"
+import React, { useState, useMemo } from "react"
+// import { codeToHtml } from "shiki" // Shiki tidak lagi digunakan untuk pratinjau
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogTrigger
+  DialogTrigger,
 } from "@/components/ui/dialog"
 import {
   Drawer,
@@ -18,11 +18,13 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerDescription,
-  DrawerTrigger
+  DrawerTrigger,
 } from "@/components/ui/drawer"
 import { ButtonCopy } from "../common/button-copy"
 import { CodeMirrorEditor } from "../common/CodeMirror"
 import { useBreakpoint } from "@/app/hooks/use-breakpoint"
+import { Code, ShareFat } from "@phosphor-icons/react"
+import { toast } from "@/components/ui/toast" 
 
 export type CodeBlockProps = {
   children?: React.ReactNode
@@ -58,11 +60,9 @@ function CodeBlockCode({
   ...props
 }: CodeBlockCodeProps) {
   const { resolvedTheme: appTheme } = useTheme()
-  const [highlightedHtml, setHighlightedHtml] = useState<string | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false); // State untuk mengontrol buka/tutup modal
-  const isMobile = useBreakpoint(768); // Deteksi mobile/desktop
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const isMobile = useBreakpoint(768);
 
-  // Determine the theme for Shiki and CodeMirror
   const currentTheme = appTheme === "dark" ? "dark" : "light";
 
   const extractLanguage = (className?: string): string => {
@@ -71,60 +71,55 @@ function CodeBlockCode({
     return match ? match[1] : "plaintext";
   };
 
-  const MAX_PREVIEW_LINES = 5; // Define max lines for preview
-
-  // Buat kode pratinjau yang terpotong
-  const previewCode = useMemo(() => {
-    const lines = code.split('\n');
-    if (lines.length > MAX_PREVIEW_LINES) {
-      return lines.slice(0, MAX_PREVIEW_LINES).join('\n');
-    }
-    return code;
-  }, [code]);
-
-  // Tentukan apakah teks "Click to expand" harus ditampilkan
-  const showExpandText = code.split('\n').length > MAX_PREVIEW_LINES;
-
-  useEffect(() => {
-    async function highlight() {
-      const shikiTheme = currentTheme === "dark" ? "github-dark" : "github-light";
-      const html = await codeToHtml(previewCode, {
-        lang: language,
-        theme: shikiTheme,
+  const handleShareCode = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      toast({
+        title: "Code copied to clipboard!",
+        status: "success",
       });
-      setHighlightedHtml(html);
+    } catch (error) {
+      console.error("Failed to copy code:", error);
+      toast({
+        title: "Failed to copy code to clipboard.",
+        status: "error",
+      });
     }
-    highlight();
-  }, [previewCode, language, currentTheme]);
+  };
 
-  const commonCodeBlockClasses = "w-full overflow-x-auto text-[13px] [&>pre]:px-4 [&>pre]:py-4 [&>pre]:!bg-background";
-
+  // Konten modal CodeMirror (akan sama untuk Drawer dan Dialog)
   const modalContent = (
     <>
       <div className="flex justify-between items-center bg-secondary p-3 border-b border-border">
         <span className="font-medium">{language} Code</span>
-        {/* Tombol close akan disediakan oleh Drawer/Dialog */}
       </div>
       {/* Kontainer untuk CodeMirror agar dapat digulir */}
       <div className="flex-1 overflow-auto">
         <CodeMirrorEditor
-          code={code}
+          code={code} // Lewatkan KODE LENGKAP di sini
           language={language}
-          readOnly={true}
+          readOnly={true} // Mode hanya-baca
           theme={currentTheme}
         />
       </div>
       <div className="flex justify-between items-center bg-secondary p-3 border-t border-border">
-        <ButtonCopy code={code} /> {/* Hanya satu tombol salin, di dalam dialog */}
-        {/* Anda bisa menambahkan tombol share di sini jika diperlukan */}
-        {/* <Button variant="outline" size="sm">Share</Button> */}
+        <ButtonCopy code={code} /> {/* Tombol salin */}
+        <button
+          onClick={handleShareCode}
+          type="button"
+          className="ml-2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80 dark:border-none h-9 px-4 py-2 has-[>svg]:px-3"
+        >
+          <ShareFat className="size-4" />
+          Share Code
+        </button>
       </div>
     </>
   );
 
   return (
     <CodeBlock className={cn(className, "relative")}>
-      <CodeBlockGroup className="flex h-9 items-center justify-between px-4">
+      {/* Header CodeBlock yang menampilkan nama bahasa */}
+      <CodeBlockGroup className="flex h-9 items-center justify-between px-4 rounded-t-xl">
         <div className="text-muted-foreground py-1 pr-2 font-mono text-xs">
           {language}
         </div>
@@ -133,17 +128,14 @@ function CodeBlockCode({
       {isMobile ? (
         <Drawer open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DrawerTrigger asChild>
-            <div className="w-full text-left p-0 cursor-pointer" onClick={() => setIsModalOpen(true)}>
-              <div
-                className={commonCodeBlockClasses}
-                dangerouslySetInnerHTML={{ __html: highlightedHtml || `<pre><code>${previewCode}</code></pre>` }}
-                {...props}
-              />
-              {showExpandText && (
-                <div className="text-muted-foreground text-center text-xs pt-2 pb-2 hover:underline">
-                  Click to view full code
-                </div>
-              )}
+            {/* Trigger minimalis: sebuah div yang menampilkan judul dan ikon */}
+            <div
+              className="cursor-pointer w-full text-left p-4 rounded-b-xl hover:bg-accent/50 transition-colors flex items-center justify-center gap-2"
+              onClick={() => setIsModalOpen(true)}
+              {...props}
+            >
+              <Code className="size-5 text-muted-foreground" />
+              <span className="font-medium text-foreground">View {language} Code</span>
             </div>
           </DrawerTrigger>
           <DrawerContent className="w-full h-dvh max-h-[90vh] flex flex-col rounded-t-lg overflow-hidden">
@@ -157,17 +149,14 @@ function CodeBlockCode({
       ) : (
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogTrigger asChild>
-            <div className="w-full text-left p-0 cursor-pointer" onClick={() => setIsModalOpen(true)}>
-              <div
-                className={commonCodeBlockClasses}
-                dangerouslySetInnerHTML={{ __html: highlightedHtml || `<pre><code>${previewCode}</code></pre>` }}
-                {...props}
-              />
-              {showExpandText && (
-                <div className="text-muted-foreground text-center text-xs pt-2 pb-2 hover:underline">
-                  Click to view full code
-                </div>
-              )}
+            {/* Trigger minimalis: sebuah div yang menampilkan judul dan ikon */}
+            <div
+              className="cursor-pointer w-full text-left p-4 rounded-b-xl hover:bg-accent/50 transition-colors flex items-center justify-center gap-2"
+              onClick={() => setIsModalOpen(true)}
+              {...props}
+            >
+              <Code className="size-5 text-muted-foreground" />
+              <span className="font-medium text-foreground">View {language} Code</span>
             </div>
           </DialogTrigger>
           <DialogContent className="w-[90vw] h-[80vh] max-w-4xl p-0 flex flex-col rounded-lg overflow-hidden">

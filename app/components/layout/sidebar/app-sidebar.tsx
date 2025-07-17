@@ -17,7 +17,9 @@ import {
   MagnifyingGlass,
   NotePencilIcon,
   X,
+  GlobeHemisphereWest,
 } from "@phosphor-icons/react"
+import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useMemo } from "react"
 import { HistoryTrigger } from "../../history/history-trigger"
@@ -71,6 +73,17 @@ export function AppSidebar() {
                 ⌘⇧U
               </div>
             </button>
+            {/* Tautan ke halaman Explore */}
+            <Link
+              href="/explore"
+              className="hover:bg-accent/80 hover:text-foreground text-primary group/explore relative inline-flex w-full items-center rounded-md bg-transparent px-2 py-2 text-sm transition-colors"
+              onClick={() => isMobile && setOpenMobile(false)}
+            >
+              <div className="flex items-center gap-2">
+                <GlobeHemisphereWest size={20} /> {/* Ikon Explore */}
+                Explore
+              </div>
+            </Link>
             <HistoryTrigger
               hasSidebar={false}
               classNameTrigger="bg-transparent hover:bg-accent/80 hover:text-foreground text-primary relative inline-flex w-full items-center rounded-md px-2 py-2 text-sm transition-colors group/search"

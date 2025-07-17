@@ -9,13 +9,28 @@ import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr"
 import Link from "next/link"
 import { Header } from "./header"
 
-type MessageType = Tables<"messages">
+// Perbarui tipe MessageType agar mencakup info pengguna
+type MessageType = Tables<"messages"> & {
+  users?: {
+    display_name: string | null
+    profile_image: string | null
+  } | null
+  senderInfo?: {
+    id: string | null
+    displayName: string | null
+    profileImage: string | null
+  } | null
+}
 
 type ArticleProps = {
   date: string
   title: string
   subtitle: string
   messages: MessageType[]
+  publisherInfo?: { 
+    display_name: string | null
+    profile_image: string | null
+  } | null
 }
 
 export default function Article({
@@ -23,6 +38,7 @@ export default function Article({
   title,
   subtitle,
   messages,
+  publisherInfo,
 }: ArticleProps) {
   return (
     <>
@@ -53,7 +69,7 @@ export default function Article({
               variant="outline"
               className="text-muted-foreground group flex h-12 w-full max-w-36 items-center justify-between rounded-full py-2 pr-2 pl-4 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
-              Ask Anything{" "}
+              Ask Neosantara AI{" "}
               <div className="rounded-full bg-black/20 p-2 backdrop-blur-sm transition-colors group-hover:bg-black/30">
                 <ArrowUpRight className="h-4 w-4 text-white" />
               </div>
@@ -65,6 +81,13 @@ export default function Article({
             const parts = message?.parts as MessageAISDK["parts"]
             const sources = getSources(parts)
 
+            // Menentukan info pengirim untuk pesan user
+            const senderInfo = message.role === 'user' ? {
+              id: message.user_id,
+              displayName: message.users?.display_name,
+              profileImage: message.users?.profile_image,
+            } : null;
+
             return (
               <div key={message.id}>
                 <Message
@@ -74,18 +97,11 @@ export default function Article({
                     message.role === "assistant" && "w-full items-start",
                     message.role === "user" && "w-full items-end"
                   )}
+                  variant={message.role}
+                  id={message.id}
+                  senderInfo={senderInfo}
                 >
-                  <MessageContent
-                    markdown={true}
-                    className={cn(
-                      message.role === "user" && "bg-blue-600 text-white",
-                      message.role === "assistant" &&
-                        "w-full min-w-full bg-transparent",
-                      "prose-h1:scroll-m-20 prose-h1:text-2xl prose-h1:font-semibold prose-h2:mt-8 prose-h2:scroll-m-20 prose-h2:text-xl prose-h2:mb-3 prose-h2:font-medium prose-h3:scroll-m-20 prose-h3:text-base prose-h3:font-medium prose-h4:scroll-m-20 prose-h5:scroll-m-20 prose-h6:scroll-m-20 prose-strong:font-medium prose-table:block prose-table:overflow-y-auto"
-                    )}
-                  >
-                    {message.content!}
-                  </MessageContent>
+                  {message.content!}
                 </Message>
                 {sources && sources.length > 0 && (
                   <SourcesList sources={sources} />

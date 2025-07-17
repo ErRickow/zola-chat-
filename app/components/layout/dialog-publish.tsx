@@ -28,7 +28,7 @@ import { useChatSession } from "@/lib/chat-store/session/provider"
 import { APP_DOMAIN } from "@/lib/config"
 import { createClient } from "@/lib/supabase/client"
 import { isSupabaseEnabled } from "@/lib/supabase/config"
-import { Check, Copy, ShareFat, Spinner } from "@phosphor-icons/react"
+import { Check, Copy, GlobeHemisphereWest, Spinner } from "@phosphor-icons/react"
 import type React from "react"
 import { useState } from "react"
 
@@ -111,13 +111,13 @@ export function DialogPublish() {
             {isLoading ? (
               <Spinner className="size-5 animate-spin" />
             ) : (
-              <ShareFat className="size-5" />
+              <GlobeHemisphereWest className="size-5" />
             )}
-            <span className="sr-only">Make public</span>
+            <span className="sr-only">Publish conversation</span>
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Make public</p>
+          <p>Publish conversation</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
