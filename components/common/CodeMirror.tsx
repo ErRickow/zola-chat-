@@ -42,7 +42,7 @@ export function CodeMirrorEditor({ code, language, readOnly = true, onChange, th
           return css();
         case 'python':
         case 'py':
-          return StreamLanguage.define(python);
+          return python();
         case 'json':
           // CodeMirror 6 tidak memiliki lang-json bawaan, bisa pakai lang-javascript dengan mode json
           // Atau cari ekstensi json pihak ketiga seperti @codemirror/lang-json
