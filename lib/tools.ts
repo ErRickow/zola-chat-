@@ -76,7 +76,6 @@ export const getWebContent = tool({
         url: result.url,
         title: result.title,
         fullText: result.text,
-        highlights: result.highlights,
         author: result.author,
         publishedDate: result.publishedDate,
       }));
