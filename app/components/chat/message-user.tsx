@@ -106,7 +106,7 @@ export function MessageUser({
       )}
     >
       {/* Pembungkus baru untuk Avatar dan Konten Pesan agar sejajar secara horizontal */}
-      <div className="flex flex-row items-start gap-3"> {/* Menggunakan flex-row dan gap-3 (sesuai default Message) */}
+      <div className="flex flex-row items-start"> {/* Menggunakan flex-row dan gap-3 (sesuai default Message) */}
         {/* Konten pesan (text) diletakkan di kiri, Avatar di kanan */}
         {isEditing ? (
           <div
