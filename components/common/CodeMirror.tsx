@@ -11,9 +11,9 @@ import { python } from '@codemirror/lang-python';
 interface CodeMirrorEditorProps {
   code: string;
   language: string;
-  readOnly?: boolean;
-  onChange?: (value: string) => void;
-  theme?: 'light' | 'dark';
+  readOnly ? : boolean;
+  onChange ? : (value: string) => void;
+  theme ? : 'light' | 'dark';
 }
 
 const getLanguageExtension = (lang: string) => {
@@ -48,24 +48,40 @@ const getThemeExtension = (currentTheme: string) => {
 };
 
 export function CodeMirrorEditor({ code, language, readOnly = true, onChange, theme = 'dark' }: CodeMirrorEditorProps) {
-  const editorRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef < HTMLDivElement > (null);
   const languageCompartment = useRef(new Compartment());
   const themeCompartment = useRef(new Compartment());
-  const [editorView, setEditorView] = useState<EditorView | null>(null);
-
+  const [editorView, setEditorView] = useState < EditorView | null > (null);
+  
   // Gunakan useCallback untuk memoize fungsi agar tidak dibuat ulang setiap render
   const memoizedGetLanguageExtension = useCallback(getLanguageExtension, []);
   const memoizedGetThemeExtension = useCallback(getThemeExtension, []);
-
-
+  
   useEffect(() => {
     if (!editorRef.current) return;
-
+    
     const startState = EditorState.create({
       doc: code,
       extensions: [
         basicSetup,
         EditorView.editable.of(!readOnly),
+        EditorView.theme({
+          "&": {
+            height: "100%",
+            fontSize: "14px"
+          },
+          ".cm-scroller": {
+            overflow: "auto",
+            maxHeight: "100%"
+          },
+          ".cm-content": {
+            padding: "16px",
+            minHeight: "100%"
+          },
+          ".cm-focused": {
+            outline: "none"
+          }
+        }),
         languageCompartment.current.of(memoizedGetLanguageExtension(language)),
         themeCompartment.current.of(memoizedGetThemeExtension(theme)),
         EditorView.updateListener.of((update) => {
@@ -75,20 +91,20 @@ export function CodeMirrorEditor({ code, language, readOnly = true, onChange, th
         }),
       ],
     });
-
+    
     const view = new EditorView({
       state: startState,
       parent: editorRef.current,
     });
-
+    
     setEditorView(view);
-
+    
     return () => {
       view.destroy();
       setEditorView(null);
     };
   }, []); // Dependensi kosong agar hanya dijalankan sekali
-
+  
   // Efek untuk memperbarui kode jika prop 'code' berubah dari luar
   useEffect(() => {
     if (editorView && code !== editorView.state.doc.toString()) {
@@ -97,7 +113,7 @@ export function CodeMirrorEditor({ code, language, readOnly = true, onChange, th
       });
     }
   }, [code, editorView]);
-
+  
   // Efek untuk memperbarui bahasa jika prop 'language' berubah
   useEffect(() => {
     if (editorView) {
@@ -106,7 +122,7 @@ export function CodeMirrorEditor({ code, language, readOnly = true, onChange, th
       });
     }
   }, [language, editorView, memoizedGetLanguageExtension]);
-
+  
   // Efek untuk memperbarui tema jika prop 'theme' berubah
   useEffect(() => {
     if (editorView) {
@@ -115,11 +131,12 @@ export function CodeMirrorEditor({ code, language, readOnly = true, onChange, th
       });
     }
   }, [theme, editorView, memoizedGetThemeExtension]);
-
+  
   return (
     <div
       ref={editorRef}
-      className="h-full w-full overflow-hidden rounded-lg"
+      className="h-full w-full overflow-hidden rounded-b-xl"
+      style={{ height: '100%' }}
     />
   );
 }
