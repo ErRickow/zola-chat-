@@ -1,13 +1,3 @@
-"use client"
-
-import {
-  MorphingDialog,
-  MorphingDialogClose,
-  MorphingDialogContainer,
-  MorphingDialogContent,
-  MorphingDialogImage,
-  MorphingDialogTrigger,
-} from "@/components/motion-primitives/morphing-dialog"
 import {
   MessageAction,
   MessageActions,
@@ -16,6 +6,14 @@ import {
   MessageAvatar,
 } from "@/components/prompt-kit/message"
 import { Button } from "@/components/ui/button"
+import {
+  MorphingDialog,
+  MorphingDialogClose,
+  MorphingDialogContainer,
+  MorphingDialogContent,
+  MorphingDialogImage,
+  MorphingDialogTrigger,
+} from "@/components/motion-primitives/morphing-dialog"
 import { cn } from "@/lib/utils"
 import { Message as MessageType } from "@ai-sdk/react"
 import { Check, Copy, Trash } from "@phosphor-icons/react"
@@ -23,23 +21,18 @@ import Image from "next/image"
 import { useRef, useState } from "react"
 import { useUser } from "@/lib/user-store/provider"
 
-const getTextFromDataUrl = (dataUrl: string) => {
-  const base64 = dataUrl.split(",")[1]
-  return base64
-}
-
 export type MessageUserProps = {
-  hasScrollAnchor?: boolean
-  attachments?: MessageType["experimental_attachments"]
+  hasScrollAnchor ? : boolean
+  attachments ? : MessageType["experimental_attachments"]
   children: string
   copied: boolean
   copyToClipboard: () => void
-  onEdit?: (id: string, newText: string) => void
-  onReload?: () => void
-  onDelete?: (id: string) => void
+  onEdit ? : (id: string, newText: string) => void
+  onReload ? : () => void
+  onDelete ? : (id: string) => void
   id: string
-  className?: string
-  senderInfo?: { // Properti baru untuk info pengirim
+  className ? : string
+  senderInfo ? : {
     id: string | null
     displayName: string | null
     profileImage: string | null
@@ -61,34 +54,49 @@ export function MessageUser({
 }: MessageUserProps) {
   const [editInput, setEditInput] = useState(children)
   const [isEditing, setIsEditing] = useState(false)
-  const contentRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef < HTMLDivElement > (null)
   const { user: loggedInUser } = useUser()
-
+  
   const handleEditCancel = () => {
     setIsEditing(false)
     setEditInput(children)
   }
-
+  
   const handleSave = () => {
     if (onEdit) {
       onEdit(id, editInput)
     }
-    if (onReload) { 
+    if (onReload) {
       onReload()
     }
     setIsEditing(false)
   }
-
+  
   const handleDelete = () => {
-    if (onDelete) { 
+    if (onDelete) {
       onDelete(id)
     }
   }
-
+  
+  const getTextFromDataUrl = (dataUrl: string) => {
+    // Fungsi ini tidak disediakan, asumsikan ada di tempat lain atau diimplementasikan
+    // sebagai placeholder.
+    if (dataUrl.startsWith("data:text/plain;base64,")) {
+      try {
+        return atob(dataUrl.split(',')[1]);
+      } catch (e) {
+        console.error("Failed to decode base64 text data URL:", e);
+        return "Error decoding text.";
+      }
+    }
+    return dataUrl; // Fallback
+  };
+  
+  
   const avatarSrc = senderInfo?.profileImage || `https://avatar.vercel.sh/${senderInfo?.id || senderInfo?.displayName || 'user'}`;
   const avatarFallback = senderInfo?.displayName?.charAt(0) || "U";
   const avatarAlt = senderInfo?.displayName || "User";
-
+  
   return (
     <MessageContainer
       className={cn(
@@ -97,12 +105,71 @@ export function MessageUser({
         className
       )}
     >
-      <MessageAvatar
-        src={loggedInUser?.profile_image || avatarSrc}
-        fallback={loggedInUser?.display_name?.charAt(0) || avatarFallback}
-        alt={loggedInUser?.display_name || avatarAlt}
-        className="ml-2"
-      />
+      {/* Pembungkus baru untuk Avatar dan Konten Pesan agar sejajar secara horizontal */}
+      <div className="flex flex-row items-start gap-3"> {/* Menggunakan flex-row dan gap-3 (sesuai default Message) */}
+        {/* Konten pesan (text) diletakkan di kiri, Avatar di kanan */}
+        {isEditing ? (
+          <div
+            className="bg-accent relative flex min-w-[180px] flex-col gap-2 rounded-3xl px-5 py-2.5"
+            style={{
+              width: contentRef.current?.offsetWidth,
+            }}
+          >
+            <textarea
+              className="w-full resize-none bg-transparent outline-none"
+              value={editInput}
+              onChange={(e) => setEditInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSave();
+                }
+                if (e.key === "Escape") {
+                  handleEditCancel();
+                }
+              }}
+              autoFocus
+            />
+            <div className="flex justify-end gap-2">
+              <Button size="sm" variant="ghost" onClick={handleEditCancel}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleSave}>
+                Save
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <MessageContent
+            className="bg-accent relative max-w-[70%] rounded-3xl px-5 py-2.5"
+            markdown={true}
+            ref={contentRef}
+            components={{
+              code: ({ children }) => <>{children}</>,
+              pre: ({ children }) => <>{children}</>,
+              h1: ({ children }) => <p>{children}</p>,
+              h2: ({ children }) => <p>{children}</p>,
+              h3: ({ children }) => <p>{children}</p>,
+              h4: ({ children }) => <p>{children}</p>,
+              h5: ({ children }) => <p>{children}</p>,
+              h6: ({ children }) => <p>{children}</p>,
+              p: ({ children }) => <p>{children}</p>,
+              li: ({ children }) => <p>- {children}</p>,
+              ul: ({ children }) => <>{children}</>,
+              ol: ({ children }) => <>{children}</>,
+            }}
+          >
+            {children}
+          </MessageContent>
+        )}
+        
+        <MessageAvatar
+          src={loggedInUser?.profile_image || avatarSrc}
+          fallback={loggedInUser?.display_name?.charAt(0) || avatarFallback}
+          alt={loggedInUser?.display_name || avatarAlt}
+        />
+      </div>
+
       {attachments?.map((attachment, index) => (
         <div
           className="flex flex-row gap-2"
@@ -145,60 +212,8 @@ export function MessageUser({
           ) : null}
         </div>
       ))}
-      {isEditing ? (
-        <div
-          className="bg-accent relative flex min-w-[180px] flex-col gap-2 rounded-3xl px-5 py-2.5"
-          style={{
-            width: contentRef.current?.offsetWidth,
-          }}
-        >
-          <textarea
-            className="w-full resize-none bg-transparent outline-none"
-            value={editInput}
-            onChange={(e) => setEditInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault()
-                handleSave()
-              }
-              if (e.key === "Escape") {
-                handleEditCancel()
-              }
-            }}
-            autoFocus
-          />
-          <div className="flex justify-end gap-2">
-            <Button size="sm" variant="ghost" onClick={handleEditCancel}>
-              Cancel
-            </Button>
-            <Button size="sm" onClick={handleSave}>
-              Save
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <MessageContent
-          className="bg-accent relative max-w-[70%] rounded-3xl px-5 py-2.5"
-          markdown={true}
-          ref={contentRef}
-          components={{
-            code: ({ children }) => <>{children}</>,
-            pre: ({ children }) => <>{children}</>,
-            h1: ({ children }) => <p>{children}</p>,
-            h2: ({ children }) => <p>{children}</p>,
-            h3: ({ children }) => <p>{children}</p>,
-            h4: ({ children }) => <p>{children}</p>,
-            h5: ({ children }) => <p>{children}</p>,
-            h6: ({ children }) => <p>{children}</p>,
-            p: ({ children }) => <p>{children}</p>,
-            li: ({ children }) => <p>- {children}</p>,
-            ul: ({ children }) => <>{children}</>,
-            ol: ({ children }) => <>{children}</>,
-          }}
-        >
-          {children}
-        </MessageContent>
-      )}
+
+      {/* Aksi Pesan */}
       <MessageActions className="flex gap-0 opacity-0 transition-opacity duration-0 group-hover:opacity-100">
         <MessageAction tooltip={copied ? "Copied!" : "Copy text"} side="bottom">
           <button
