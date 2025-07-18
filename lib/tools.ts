@@ -44,8 +44,7 @@ export const search = tool({
     } catch (error) {
       console.error('Error during web search:', error);
       return {
-        error: 'Failed to perform web search.',
-        details: error.message
+        error: 'Failed to perform web search.'
       };
     }
   },
