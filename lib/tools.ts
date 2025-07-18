@@ -38,7 +38,7 @@ export const search = tool({
         numResults: numResults,
         type: type,
         text: getText ? { maxCharacters: 1000 } : undefined,
-        highlights: getHighlights,
+        highlights: getHighlights ? { query: highlightQuery } : false,
       });
       
       return results.results.map(result => ({
