@@ -204,7 +204,7 @@ function n(num: number): number {
 }
 
 export function Weather({
-  weatherAtLocation,
+  weatherAtLocation = SAMPLE,
 }: {
   weatherAtLocation: WeatherAtLocation;
 }) {
