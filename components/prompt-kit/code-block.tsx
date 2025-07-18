@@ -3,24 +3,20 @@
 import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
 import React, { useState, useMemo } from "react"
-// Hapus import Dialog dan Drawer
-// import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog"
-// import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerTrigger } from "@/components/ui/drawer"
 import { ButtonCopy } from "../common/button-copy"
 import { CodeMirrorEditor } from "../common/CodeMirror"
-// import { useBreakpoint } from "@/app/hooks/use-breakpoint" // Tidak perlu lagi useBreakpoint jika tidak ada Drawer/Dialog
-import { Code, ShareFat, ArrowsInSimple, ArrowsOutSimple } from "@phosphor-icons/react" // Tambah ikon expand/collapse
+import { Code, ShareFat, ArrowsInSimple, ArrowsOutSimple } from "@phosphor-icons/react"
 import { toast } from "@/components/ui/toast"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export type CodeBlockProps = {
-  children?: React.ReactNode
-  className?: string
-} & React.HTMLProps<HTMLDivElement>
-
-function CodeBlock({ children, className, ...props }: CodeBlockProps) {
-  return (
-    <div
+    children ? : React.ReactNode
+    className ? : string
+  } & React.HTMLProps < HTMLDivElement >
+  
+  function CodeBlock({ children, className, ...props }: CodeBlockProps) {
+    return (
+      <div
       className={cn(
         "not-prose flex w-full flex-col overflow-clip border",
         "border-border bg-card text-card-foreground rounded-xl",
@@ -30,143 +26,157 @@ function CodeBlock({ children, className, ...props }: CodeBlockProps) {
     >
       {children}
     </div>
-  )
-}
+    )
+  }
 
 export type CodeBlockCodeProps = {
-  code: string
-  language?: string
-  theme?: string
-  className?: string
-  status?: "streaming" | "ready" | "submitted" | "error";
-} & React.HTMLProps<HTMLDivElement>
-
-function CodeBlockCode({
-  code,
-  language = "plaintext",
-  className,
-  status,
-  ...props
-}: CodeBlockCodeProps) {
-  const { resolvedTheme: appTheme } = useTheme()
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  const currentTheme = appTheme === "dark" ? "dark" : "light";
-
-  const extractLanguage = (className?: string): string => {
-    if (!className) return "plaintext";
-    const match = className.match(/language-(\w+)/);
-    return match ? match[1] : "plaintext";
-  };
-
-  const handleShareCode = async () => {
-    try {
-      await navigator.clipboard.writeText(code);
-      toast({
-        title: "Code copied to clipboard!",
-        status: "success",
-      });
-    } catch (error) {
-      console.error("Failed to copy code:", error);
-      toast({
-        title: "Failed to copy code to clipboard.",
-        status: "error",
-      });
+    code: string
+    language ? : string
+    theme ? : string
+    className ? : string
+    status ? : "streaming" | "ready" | "submitted" | "error"
+    previewLines ? : number // Jumlah baris yang ditampilkan dalam preview
+    showPreview ? : boolean // Apakah menampilkan preview atau langsung full
+  } & React.HTMLProps < HTMLDivElement >
+  
+  function CodeBlockCode({
+    code,
+    language = "plaintext",
+    className,
+    status,
+    previewLines = 10,
+    showPreview = true,
+    ...props
+  }: CodeBlockCodeProps) {
+    const { resolvedTheme: appTheme } = useTheme()
+    const [isExpanded, setIsExpanded] = useState(false)
+    
+    const currentTheme = appTheme === "dark" ? "dark" : "light"
+    
+    // Hitung apakah kode perlu dipotong untuk preview
+    const codeLines = code.split('\n')
+    const needsPreview = showPreview && codeLines.length > previewLines
+    const previewCode = needsPreview ? codeLines.slice(0, previewLines).join('\n') : code
+    
+    const handleShareCode = async () => {
+      try {
+        await navigator.clipboard.writeText(code)
+        toast({
+          title: "Code copied to clipboard!",
+          status: "success",
+        })
+      } catch (error) {
+        console.error("Failed to copy code:", error)
+        toast({
+          title: "Failed to copy code to clipboard.",
+          status: "error",
+        })
+      }
     }
-  };
-
-  const isLoading = status === "streaming" || status === "submitted";
-
-  return (
-    <CodeBlock className={cn(className, "relative")}>
-      <CodeBlockGroup className="flex h-9 items-center justify-between px-4 rounded-t-xl">
-        <div className="text-muted-foreground py-1 pr-2 font-mono text-xs">
+    
+    const isLoading = status === "streaming" || status === "submitted"
+    
+    // Jika tidak perlu preview atau sudah expanded, tampilkan penuh
+    const shouldShowFull = !needsPreview || isExpanded
+    
+    return (
+      <CodeBlock className={cn(className, "relative")}>
+      {/* Header dengan info bahasa dan tombol aksi */}
+      <CodeBlockGroup className="flex h-9 items-center justify-between px-4 rounded-t-xl bg-muted/50">
+        <div className="text-muted-foreground py-1 pr-2 font-mono text-xs uppercase tracking-wide">
           {language}
         </div>
-        {/* Tombol aksi di header */}
-        <div className="flex gap-2">
-          {isExpanded && (
-            <>
-              <ButtonCopy code={code} />
-              <button
-                onClick={handleShareCode}
-                type="button"
-                className="ml-2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80 dark:border-none h-9 px-4 py-2 has-[>svg]:px-3"
-              >
-                <ShareFat className="size-4" />
-                Share
-              </button>
-            </>
-          )}
-          {/* Tombol Expand/Collapse */}
+        
+        <div className="flex gap-1">
+          <ButtonCopy code={code} />
           <button
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={handleShareCode}
             type="button"
-            className="ml-2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80 dark:border-none h-9 px-4 py-2 has-[>svg]:px-3"
+            className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-xs font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-ring bg-transparent hover:bg-secondary/50 h-8 px-2"
+            title="Share code"
           >
-            {isExpanded ? (
-              <>
-                <ArrowsInSimple className="size-4" />
-                Collapse
-              </>
-            ) : (
-              <>
-                <ArrowsOutSimple className="size-4" />
-                Expand
-              </>
-            )}
+            <ShareFat className="size-3" />
           </button>
+          
+          {needsPreview && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              type="button"
+              className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-xs font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-ring bg-transparent hover:bg-secondary/50 h-8 px-2"
+              title={isExpanded ? "Collapse code" : "Expand code"}
+            >
+              {isExpanded ? (
+                <ArrowsInSimple className="size-3" />
+              ) : (
+                <ArrowsOutSimple className="size-3" />
+              )}
+            </button>
+          )}
         </div>
       </CodeBlockGroup>
 
       {isLoading ? (
-        <div className="cursor-default w-full text-left p-4 rounded-b-xl flex items-center justify-center gap-2">
+        <div className="w-full p-4 rounded-b-xl flex items-center justify-center gap-2">
           <Skeleton className="size-5 rounded-full" />
           <Skeleton className="h-4 w-32" />
         </div>
       ) : (
-        <>
-          {!isExpanded ? (
-            <div
-              className="cursor-pointer w-full text-left p-4 rounded-b-xl hover:bg-accent/50 transition-colors flex items-center justify-center gap-2"
-              onClick={() => setIsExpanded(true)} // Klik untuk expand
-              {...props}
-            >
-              <Code className="size-5 text-muted-foreground" />
-              <span className="font-medium text-foreground">View {language} Code</span>
-            </div>
-          ) : (
-            // Tampilan CodeMirror penuh saat expanded
-            <div className="relative flex-1 overflow-y-auto max-h-[500px] md:max-h-[700px] lg:max-h-[800px] rounded-b-xl"> {/* Max height agar bisa scroll */}
-              <CodeMirrorEditor
-                code={code}
-                language={language}
-                readOnly={true}
-                theme={currentTheme}
-              />
+        <div className="relative">
+          {/* Container untuk CodeMirror dengan height yang dinamis */}
+          <div 
+            className={cn(
+              "relative overflow-hidden rounded-b-xl transition-all duration-300",
+              shouldShowFull 
+                ? "max-h-[500px] md:max-h-[700px] lg:max-h-[800px]" 
+                : "max-h-[300px]"
+            )}
+          >
+            <CodeMirrorEditor
+              code={shouldShowFull ? code : previewCode}
+              language={language}
+              readOnly={true}
+              theme={currentTheme}
+            />
+          </div>
+
+          {/* Overlay untuk preview mode */}
+          {needsPreview && !isExpanded && (
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/95 pointer-events-none rounded-b-xl" />
+          )}
+
+          {/* Tombol expand untuk preview mode */}
+          {needsPreview && !isExpanded && (
+            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background to-transparent rounded-b-xl">
+              <button
+                onClick={() => setIsExpanded(true)}
+                className="w-full inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-ring bg-secondary/80 backdrop-blur-sm hover:bg-secondary text-secondary-foreground h-9 px-4 py-2"
+              >
+                <Code className="size-4" />
+                View full code ({codeLines.length} lines)
+              </button>
             </div>
           )}
-        </>
+        </div>
       )}
     </CodeBlock>
-  );
-}
+    )
+  }
 
-export type CodeBlockGroupProps = React.HTMLAttributes<HTMLDivElement>
-
-function CodeBlockGroup({
-  children,
-  className,
-  ...props
-}: CodeBlockGroupProps) {
-  return (
-    <div
+export type CodeBlockGroupProps = React.HTMLAttributes < HTMLDivElement >
+  
+  function CodeBlockGroup({
+    children,
+    className,
+    ...props
+  }: CodeBlockGroupProps) {
+    return (
+      <div
       className={cn("flex items-center justify-between", className)}
       {...props}
     >
       {children}
     </div>
-  )
-}
+    )
+  }
 
 export { CodeBlockGroup, CodeBlockCode, CodeBlock }

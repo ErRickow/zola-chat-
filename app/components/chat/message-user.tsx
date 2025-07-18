@@ -1,11 +1,5 @@
-import {
-  MessageAction,
-  MessageActions,
-  Message as MessageContainer,
-  MessageContent,
-  MessageAvatar,
-} from "@/components/prompt-kit/message"
-import { Button } from "@/components/ui/button"
+"use client"
+
 import {
   MorphingDialog,
   MorphingDialogClose,
@@ -14,6 +8,14 @@ import {
   MorphingDialogImage,
   MorphingDialogTrigger,
 } from "@/components/motion-primitives/morphing-dialog"
+import {
+  MessageAction,
+  MessageActions,
+  Message as MessageContainer,
+  MessageContent,
+  MessageAvatar,
+} from "@/components/prompt-kit/message"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Message as MessageType } from "@ai-sdk/react"
 import { Check, Copy, Trash } from "@phosphor-icons/react"
@@ -21,18 +23,32 @@ import Image from "next/image"
 import { useRef, useState } from "react"
 import { useUser } from "@/lib/user-store/provider"
 
-export type MessageUserProps = {
-  hasScrollAnchor ? : boolean
-  attachments ? : MessageType["experimental_attachments"]
+const getTextFromDataUrl = (dataUrl: string) => {
+  // Pastikan fungsi ini didefinisikan di tempat yang dapat diakses
+  // atau Anda bisa menambahkannya langsung di sini
+  if (dataUrl.startsWith("data:text/plain;base64,")) {
+      try {
+          return atob(dataUrl.split(',')[1]);
+      } catch (e) {
+          console.error("Failed to decode base64 text data URL:", e);
+          return "Error decoding text.";
+      }
+  }
+  return dataUrl; // Fallback jika bukan data URL teks yang dikenal
+};
+
+type MessageUserProps = {
+  hasScrollAnchor?: boolean
+  attachments?: MessageType["experimental_attachments"]
   children: string
   copied: boolean
   copyToClipboard: () => void
-  onEdit ? : (id: string, newText: string) => void
-  onReload ? : () => void
-  onDelete ? : (id: string) => void
+  onEdit?: (id: string, newText: string) => void
+  onReload?: () => void
+  onDelete?: (id: string) => void
   id: string
-  className ? : string
-  senderInfo ? : {
+  className?: string
+  senderInfo?: { 
     id: string | null
     displayName: string | null
     profileImage: string | null
@@ -54,49 +70,34 @@ export function MessageUser({
 }: MessageUserProps) {
   const [editInput, setEditInput] = useState(children)
   const [isEditing, setIsEditing] = useState(false)
-  const contentRef = useRef < HTMLDivElement > (null)
+  const contentRef = useRef<HTMLDivElement>(null)
   const { user: loggedInUser } = useUser()
-  
+
   const handleEditCancel = () => {
     setIsEditing(false)
     setEditInput(children)
   }
-  
+
   const handleSave = () => {
     if (onEdit) {
       onEdit(id, editInput)
     }
-    if (onReload) {
+    if (onReload) { 
       onReload()
     }
     setIsEditing(false)
   }
-  
+
   const handleDelete = () => {
-    if (onDelete) {
+    if (onDelete) { 
       onDelete(id)
     }
   }
-  
-  const getTextFromDataUrl = (dataUrl: string) => {
-    // Fungsi ini tidak disediakan, asumsikan ada di tempat lain atau diimplementasikan
-    // sebagai placeholder.
-    if (dataUrl.startsWith("data:text/plain;base64,")) {
-      try {
-        return atob(dataUrl.split(',')[1]);
-      } catch (e) {
-        console.error("Failed to decode base64 text data URL:", e);
-        return "Error decoding text.";
-      }
-    }
-    return dataUrl; // Fallback
-  };
-  
-  
-  const avatarSrc = senderInfo?.profileImage || `https://avatar.vercel.sh/${senderInfo?.id || senderInfo?.displayName || 'user'}`;
-  const avatarFallback = senderInfo?.displayName?.charAt(0) || "U";
-  const avatarAlt = senderInfo?.displayName || "User";
-  
+
+  const avatarSrc = loggedInUser?.profile_image || senderInfo?.profileImage || `https://avatar.vercel.sh/${senderInfo?.id || senderInfo?.displayName || 'user'}`;
+  const avatarFallback = loggedInUser?.display_name?.charAt(0) || senderInfo?.displayName?.charAt(0) || "U";
+  const avatarAlt = loggedInUser?.display_name || senderInfo?.displayName || "User";
+
   return (
     <MessageContainer
       className={cn(
@@ -105,8 +106,8 @@ export function MessageUser({
         className
       )}
     >
-      {/* Pembungkus baru untuk Avatar dan Konten Pesan agar sejajar secara horizontal */}
-      <div className="flex flex-row items-start"> {/* Menggunakan flex-row dan gap-3 (sesuai default Message) */}
+      {/* Pembungkus baru untuk Konten Pesan dan Avatar agar sejajar horizontal dan responsif */}
+      <div className="flex flex-row items-start gap-3 justify-end"> {/* Menambahkan justify-end di sini */}
         {/* Konten pesan (text) diletakkan di kiri, Avatar di kanan */}
         {isEditing ? (
           <div
@@ -164,15 +165,16 @@ export function MessageUser({
         )}
         
         <MessageAvatar
-          src={loggedInUser?.profile_image || avatarSrc}
-          fallback={loggedInUser?.display_name?.charAt(0) || avatarFallback}
-          alt={loggedInUser?.display_name || avatarAlt}
+          src={avatarSrc}
+          fallback={avatarFallback}
+          alt={avatarAlt}
         />
-      </div>
+      </div> {/* Akhir dari pembungkus baru untuk konten & avatar */}
 
+      {/* Lampiran (Attachments) - pastikan juga sejajar ke kanan jika berada di bawah block pesan utama */}
       {attachments?.map((attachment, index) => (
         <div
-          className="flex flex-row gap-2"
+          className="flex justify-end mt-1"
           key={`${attachment.name}-${index}`}
         >
           {attachment.contentType?.startsWith("image") ? (
@@ -186,7 +188,7 @@ export function MessageUser({
             >
               <MorphingDialogTrigger className="z-10">
                 <Image
-                  className="mb-1 w-40 rounded-md"
+                  className="w-40 rounded-md"
                   key={attachment.name}
                   src={attachment.url}
                   alt={attachment.name || "Attachment"}
@@ -206,7 +208,7 @@ export function MessageUser({
               </MorphingDialogContainer>
             </MorphingDialog>
           ) : attachment.contentType?.startsWith("text") ? (
-            <div className="text-primary mb-3 h-24 w-40 overflow-hidden rounded-md border p-2 text-xs">
+            <div className="text-primary h-24 w-40 overflow-hidden rounded-md border p-2 text-xs">
               {getTextFromDataUrl(attachment.url)}
             </div>
           ) : null}
@@ -214,7 +216,7 @@ export function MessageUser({
       ))}
 
       {/* Aksi Pesan */}
-      <MessageActions className="flex gap-0 opacity-0 transition-opacity duration-0 group-hover:opacity-100">
+      <MessageActions className="flex gap-0 opacity-0 transition-opacity duration-0 group-hover:opacity-100 justify-end"> {/* Menambahkan justify-end di sini juga */}
         <MessageAction tooltip={copied ? "Copied!" : "Copy text"} side="bottom">
           <button
             className="hover:bg-accent/60 text-muted-foreground hover:text-foreground flex size-7.5 items-center justify-center rounded-full bg-transparent transition"
@@ -229,21 +231,6 @@ export function MessageUser({
             )}
           </button>
         </MessageAction>
-        {/* @todo: add when ready */}
-        {/* <MessageAction
-          tooltip={isEditing ? "Save" : "Edit"}
-          side="bottom"
-          delayDuration={0}
-        >
-          <button
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-transparent transition"
-            aria-label="Edit"
-            onClick={() => setIsEditing(!isEditing)}
-            type="button"
-          >
-            <PencilSimple className="size-4" />
-          </button>
-        </MessageAction> */}
         <MessageAction tooltip="Delete" side="bottom">
           <button
             className="hover:bg-accent/60 text-muted-foreground hover:text-foreground flex size-7.5 items-center justify-center rounded-full bg-transparent transition"
