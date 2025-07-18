@@ -30,8 +30,9 @@ export const search = tool({
     type: z.enum(['auto', 'neural', 'keyword']).default('auto').describe('The type of search to perform.').optional(),
     getText: z.boolean().default(true).describe('Whether to retrieve full text content from pages.'),
     getHighlights: z.boolean().default(false).describe('Whether to get highlighted excerpts relevant to the query.'),
+    highlightQuery: z.string().optional().describe('Query for highlighting relevant content.'),
   }),
-  execute: async ({ query, numResults, type, getText, getHighlights }) => {
+  execute: async ({ query, numResults, type, getText, getHighlights, highlightQuery }) => {
     try {
       // Use searchAndContents instead of search to get full page content
       const results = await exa.searchAndContents(query, {
