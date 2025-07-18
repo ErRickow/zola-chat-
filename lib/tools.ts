@@ -7,7 +7,7 @@ const exa = new Exa(process.env.EXA_API_KEY);
 // Definisi tool untuk mendapatkan cuaca
 export const getWeather = tool({
   description: 'Get the current weather at a location',
-  inputSchema: z.object({
+  parameters: z.object({
     latitude: z.number(),
     longitude: z.number(),
   }),
@@ -24,20 +24,16 @@ export const getWeather = tool({
 // Definisi tool untuk pencarian web menggunakan Exa
 export const search = tool({
   description: 'Search the web for information using a given query.',
-  inputSchema: z.object({
+  parameters: z.object({
     query: z.string().describe('The search query to use.'),
     numResults: z.number().int().min(1).max(10).default(5).describe('The number of search results to return (max 10).'),
   }),
   execute: async ({ query, numResults }) => {
     try {
-      // Lakukan pencarian menggunakan Exa
       const results = await exa.search(query, {
         numResults: numResults,
-        // includeContents: true, // Untuk mendapatkan konten halaman secara langsung
       });
 
-      // Kembalikan hasil pencarian
-      // Kita hanya mengembalikan snippet dan URL untuk kesederhanaan
       return results.results.map(result => ({
         title: result.title,
         url: result.url,
