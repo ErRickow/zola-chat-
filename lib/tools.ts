@@ -23,28 +23,69 @@ export const getWeather = tool({
 
 // Definisi tool untuk pencarian web menggunakan Exa
 export const search = tool({
-  description: 'Search the web for information using a given query.',
+  description: 'Search the web for information and get full content from pages.',
   parameters: z.object({
     query: z.string().describe('The search query to use.'),
-    numResults: z.number().int().min(1).max(10).default(10).describe('The number of search results to return (max 10).'),
+    numResults: z.number().int().min(1).max(10).default(3).describe('The number of search results to return (max 10).'),
     type: z.enum(['auto', 'neural', 'keyword']).default('auto').describe('The type of search to perform.').optional(),
+    getText: z.boolean().default(true).describe('Whether to retrieve full text content from pages.'),
+    getHighlights: z.boolean().default(false).describe('Whether to get highlighted excerpts relevant to the query.'),
   }),
-  execute: async ({ query, numResults, type }) => {
+  execute: async ({ query, numResults, type, getText, getHighlights }) => {
     try {
-      const results = await exa.search(query, {
+      // Use searchAndContents instead of search to get full page content
+      const results = await exa.searchAndContents(query, {
         numResults: numResults,
         type: type,
+        text: getText,
+        highlights: getHighlights,
       });
       
       return results.results.map(result => ({
         title: result.title,
         url: result.url,
-        snippet: result.text,
+        snippet: result.text ? result.text.substring(0, 500) + '...' : result.snippet,
+        fullText: result.text, // This contains the full webpage content
+        highlights: result.highlights,
+        publishedDate: result.publishedDate,
+        author: result.author,
       }));
     } catch (error) {
       console.error('Error during web search:', error);
       return {
         error: 'Failed to perform web search.'
+      };
+    }
+  },
+});
+
+export const getWebContent = tool({
+  description: 'Get full content from specific web pages using their URLs.',
+  parameters: z.object({
+    urls: z.array(z.string()).describe('Array of URLs to get content from.'),
+    getText: z.boolean().default(true).describe('Whether to retrieve full text content.'),
+    getHighlights: z.boolean().default(false).describe('Whether to get highlighted excerpts.'),
+    highlightQuery: z.string().optional().describe('Query for highlighting relevant content.'),
+  }),
+  execute: async ({ urls, getText, getHighlights, highlightQuery }) => {
+    try {
+      const contents = await exa.getContents(urls, {
+        text: getText,
+        highlights: getHighlights ? { query: highlightQuery } : false,
+      });
+      
+      return contents.results.map(result => ({
+        url: result.url,
+        title: result.title,
+        fullText: result.text,
+        highlights: result.highlights,
+        author: result.author,
+        publishedDate: result.publishedDate,
+      }));
+    } catch (error) {
+      console.error('Error getting web content:', error);
+      return {
+        error: 'Failed to retrieve web content.'
       };
     }
   },

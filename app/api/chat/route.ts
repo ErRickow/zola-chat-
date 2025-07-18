@@ -11,7 +11,7 @@ import {
   validateAndTrackUsage,
 } from "./api"
 import { createErrorResponse, extractErrorMessage } from "./utils"
-import { getWeather, search } from "@/lib/tools"
+import { getWeather, search, getWebContent } from "@/lib/tools"
 
 export const maxDuration = 60
 
@@ -97,6 +97,7 @@ export async function POST(req: Request) {
       tools: {
         getWeather: getWeather,
         search: search,
+        getWebContent: getWebContent,
       },
       maxSteps: 10,
       onError: (err: unknown) => {
