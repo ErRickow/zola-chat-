@@ -37,7 +37,7 @@ export const search = tool({
       const results = await exa.searchAndContents(query, {
         numResults: numResults,
         type: type,
-        text: getText,
+        text: getText ? { maxCharacters: 1000 } : undefined,
         highlights: getHighlights,
       });
       
@@ -70,7 +70,7 @@ export const getWebContent = tool({
   execute: async ({ urls, getText, getHighlights, highlightQuery }) => {
     try {
       const contents = await exa.getContents(urls, {
-        text: getText,
+        text: getText ? { maxCharacters: 1000 } : undefined,
         highlights: getHighlights ? { query: highlightQuery } : false,
       });
       
