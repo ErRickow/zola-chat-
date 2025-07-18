@@ -45,7 +45,6 @@ export const search = tool({
         title: result.title,
         url: result.url,
         fullText: result.text,
-        highlights: result.highlights,
         publishedDate: result.publishedDate,
         author: result.author,
       }));
