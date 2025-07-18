@@ -34,7 +34,6 @@ export const search = tool({
   }),
   execute: async ({ query, numResults, type, getText, getHighlights, highlightQuery }) => {
     try {
-      // Use searchAndContents instead of search to get full page content
       const results = await exa.searchAndContents(query, {
         numResults: numResults,
         type: type,
@@ -45,8 +44,7 @@ export const search = tool({
       return results.results.map(result => ({
         title: result.title,
         url: result.url,
-        snippet: result.text ? result.text.substring(0, 500) + '...' : result.snippet,
-        fullText: result.text, // This contains the full webpage content
+        fullText: result.text,
         highlights: result.highlights,
         publishedDate: result.publishedDate,
         author: result.author,
@@ -72,7 +70,7 @@ export const getWebContent = tool({
     try {
       const contents = await exa.getContents(urls, {
         text: getText ? { maxCharacters: 1000 } : undefined,
-        highlights: getHighlights ? { query: highlightQuery } : undefined,
+        highlights: getHighlights && highlightQuery ? { query: highlightQuery } : undefined,
       });
       
       return contents.results.map(result => ({
