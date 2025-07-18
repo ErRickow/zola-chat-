@@ -38,7 +38,7 @@ export const search = tool({
         numResults: numResults,
         type: type,
         text: getText ? { maxCharacters: 1000 } : undefined,
-        highlights: getHighlights ? { query: highlightQuery } : false,
+        highlights: getHighlights ? { query: highlightQuery } : undefined,
       });
       
       return results.results.map(result => ({
@@ -71,7 +71,7 @@ export const getWebContent = tool({
     try {
       const contents = await exa.getContents(urls, {
         text: getText ? { maxCharacters: 1000 } : undefined,
-        highlights: getHighlights ? { query: highlightQuery } : false,
+        highlights: getHighlights ? { query: highlightQuery } : undefined,
       });
       
       return contents.results.map(result => ({
