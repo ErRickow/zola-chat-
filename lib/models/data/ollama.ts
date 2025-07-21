@@ -110,11 +110,11 @@ const neosantaraModels: ModelConfig[] = [
     intelligence: "High",
     website: "https://neosantara.xyz",
     apiDocs: "https://docs.neosantara.xyz",
-    modelPage: "https://api.neosantara.xyz/models/archipelago-7b",
+    modelPage: "https://api.neosantara.xyz/models/bahasa-llm",
     icon: "ollama",
     apiSdk: (apiKey?: string) =>
       openproviders(
-        "archipelago-7b" as string,
+        "bahasa-llm" as string,
         undefined,
         apiKey
       ),
