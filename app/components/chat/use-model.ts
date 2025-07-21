@@ -3,6 +3,7 @@ import { Chats } from "@/lib/chat-store/types"
 import { MODEL_DEFAULT } from "@/lib/config"
 import type { UserProfile } from "@/lib/user/types"
 import { useCallback, useState } from "react"
+import { useRouter } from "next/navigation"
 
 interface UseModelProps {
   currentChat: Chats | null
@@ -26,6 +27,7 @@ export function useModel({
   updateChatModel,
   chatId,
 }: UseModelProps) {
+  const router = useRouter()
   // Calculate the effective model based on priority: chat model > first favorite model > default
   const getEffectiveModel = useCallback(() => {
     const firstFavoriteModel = user?.favorite_models?.[0]
@@ -49,6 +51,11 @@ export function useModel({
         // For unauthenticated users without chat, just update local state
         setLocalSelectedModel(newModel)
         return
+      }
+      
+      // we will to not update the model when already choosing model for current chat
+      if (currentChat && updateChatModel) {
+        router.push("/")
       }
 
       // For authenticated users with a chat, persist the change
