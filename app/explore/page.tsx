@@ -9,6 +9,8 @@ import { ChatCircle, CalendarBlank } from "@phosphor-icons/react"
 import { formatDate } from "@/app/components/history/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
+import { isSupabaseEnabled } from "@/lib/supabase/config"
+import { notFound } from "next/navigation"
 
 type PublicChat = {
   id: string
@@ -23,6 +25,10 @@ type PublicChat = {
 }
 
 export default function ExplorePage() {
+  if (!isSupabaseEnabled) {
+    return notFound()
+  }
+  
   const { data: publicChats, isLoading, error } = useQuery<PublicChat[]>({
     queryKey: ["public-chats"],
     queryFn: async () => {
