@@ -106,7 +106,7 @@ const neosantaraModels: ModelConfig[] = [
     audio: false,
     reasoning: true,
     openSource: false,
-    speed: "low",
+    speed: "Slow",
     intelligence: "High",
     website: "https://neosantara.xyz",
     apiDocs: "https://docs.neosantara.xyz",
