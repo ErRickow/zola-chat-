@@ -45,7 +45,7 @@ const neosantaraModels: ModelConfig[] = [
     reasoning: false,
     openSource: false, // Adjust
     speed: "Fast", // Adjust
-    intelligence: "Mid", // Adjust
+    intelligence: "Medium", // Adjust
     website: "https://neosantara.xyz", // Replace with your documentation/site URL
     apiDocs: "https://docs.neosantara.xyz", // Replace with your API documentation URL
     modelPage: "https://www.neosantara.xyz/models", // Replace with your model page URL
@@ -106,7 +106,7 @@ const neosantaraModels: ModelConfig[] = [
     audio: false,
     reasoning: true,
     openSource: false,
-    speed: "slow",
+    speed: "low",
     intelligence: "High",
     website: "https://neosantara.xyz",
     apiDocs: "https://docs.neosantara.xyz",
