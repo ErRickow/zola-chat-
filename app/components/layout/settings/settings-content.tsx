@@ -85,8 +85,8 @@ export function SettingsContent({
                   value="apikeys"
                   className="flex shrink-0 items-center gap-2"
                 >
-                  <KeyIcon className="size-4" />
-                  <span>API Keys</span>
+                  <PlugsConnectedIcon className="size-4" />
+                  <span>Connections</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="models"
