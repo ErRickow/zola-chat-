@@ -20,13 +20,19 @@ import { useState } from "react"
 import { AppInfoTrigger } from "./app-info/app-info-trigger"
 import { FeedbackTrigger } from "./feedback/feedback-trigger"
 import { SettingsTrigger } from "./settings/settings-trigger"
+import { usePathname } from "next/navigation" // Import usePathname
 
 export function UserMenu() {
   const { user } = useUser()
   const [isMenuOpen, setMenuOpen] = useState(false)
   const [isSettingsOpen, setSettingsOpen] = useState(false)
+  const pathname = usePathname()
 
   if (!user) return null
+  
+  if (pathname?.startsWith("/c/")) {
+    return null
+  }
 
   const handleSettingsOpenChange = (isOpen: boolean) => {
     setSettingsOpen(isOpen)
