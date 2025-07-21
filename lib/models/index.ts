@@ -42,7 +42,8 @@ export async function getAllModels(): Promise<ModelConfig[]> {
 export async function getModelsWithAccessFlags(): Promise<ModelConfig[]> {
   const models = await getAllModels();
 
-  // Karena semua model Anda "gratis" (dari layanan kustom Anda),
+
+  {/** TODO **/}
   // semua akan ditandai sebagai dapat diakses.
   const accessibleModels = models.map((model) => ({
     ...model,

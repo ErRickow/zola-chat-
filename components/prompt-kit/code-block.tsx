@@ -45,7 +45,7 @@ function CodeBlockCode({
   language = "plaintext",
   className,
   status,
-  previewLines = 10,
+  previewLines = 5,
   showPreview = true,
   showHeader = true,
   ...props
@@ -110,20 +110,8 @@ function CodeBlockCode({
         {/* Header */}
         {showHeader && (
           <CodeBlockGroup className="flex h-9 items-center justify-between px-4 rounded-t-xl bg-muted/50">
-            <div className="text-muted-foreground py-1 pr-2 font-mono text-xs uppercase tracking-wide">
-              {language}
-            </div>
             
             <div className="flex gap-1">
-              <ButtonCopy code={code} />
-              <button
-                onClick={handleShareCode}
-                type="button"
-                className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-xs font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-ring bg-transparent hover:bg-secondary/50 h-8 px-2"
-                title="Share code"
-              >
-                <ShareFat className="size-3" />
-              </button>
               
               {needsPreview && (
                 <button
@@ -204,7 +192,6 @@ function CodeBlockCode({
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <ButtonCopy code={code} />
                   <button
                     onClick={handleShareCode}
                     type="button"

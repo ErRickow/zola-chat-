@@ -9,7 +9,7 @@ export function cn(...inputs: ClassValue[]) {
  * Format a number with commas for thousands, etc
  */
 export function formatNumber(n: number) {
-  return new Intl.NumberFormat("en-US").format(n)
+  return new Intl.NumberFormat("id-ID").format(n)
 }
 
 /**

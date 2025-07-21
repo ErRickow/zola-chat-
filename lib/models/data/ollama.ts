@@ -33,22 +33,22 @@ const neosantaraModels: ModelConfig[] = [
     providerId: "ollama", // IMPORTANT: Keep this so Zola uses OLLAMA_BASE_URL
     modelFamily: "Nusantara",
     baseProviderId: "ollama", // Keep this for the default Ollama icon or change if there's a custom icon
-    description: "The base Neosantara AI model.",
-    tags: ["custom", "openai-compatible", "indonesian"],
-    contextWindow: 32768, // Adjust according to your model's capabilities
+    description: "Base model for general tasks with balanced performance and speed.",
+    tags: ["fast", "web-search"],
+    contextWindow: 64000,
     inputCost: 0.0,
     outputCost: 0.0,
     priceUnit: "free",
     vision: false,
     tools: true,
     audio: false,
-    reasoning: true,
+    reasoning: false,
     openSource: false, // Adjust
     speed: "Fast", // Adjust
-    intelligence: "High", // Adjust
+    intelligence: "Mid", // Adjust
     website: "https://neosantara.xyz", // Replace with your documentation/site URL
     apiDocs: "https://docs.neosantara.xyz", // Replace with your API documentation URL
-    modelPage: "https://api.neosantara.xyz/models/nusantara-base", // Replace with your model page URL
+    modelPage: "https://www.neosantara.xyz/models", // Replace with your model page URL
     icon: "ollama", // Uses the default Ollama icon, or change if you create a custom icon
     apiSdk: (apiKey?: string) =>
       openproviders(
@@ -64,22 +64,22 @@ const neosantaraModels: ModelConfig[] = [
     providerId: "ollama",
     modelFamily: "Archipelago",
     baseProviderId: "ollama",
-    description: "The Archipelago 7B model from Neosantara AI.",
-    tags: ["custom", "indonesian", "large"],
-    contextWindow: 65536,
+    description: "Specialized model for Indonesian language content with cultural context awareness.",
+    tags: ["pro", "web-sewrch", "testing"],
+    contextWindow: 4096,
     inputCost: 0.0,
     outputCost: 0.0,
-    priceUnit: "free",
+    priceUnit: "pro",
     vision: false,
-    tools: true,
+    tools: false,
     audio: false,
-    reasoning: true,
+    reasoning: false,
     openSource: false,
     speed: "Medium",
     intelligence: "High",
     website: "https://neosantara.xyz",
     apiDocs: "https://docs.neosantara.xyz",
-    modelPage: "https://api.neosantara.xyz/models/archipelago-7b",
+    modelPage: "https://neosantara.xyz/models",
     icon: "ollama",
     apiSdk: (apiKey?: string) =>
       openproviders(
@@ -96,21 +96,21 @@ const neosantaraModels: ModelConfig[] = [
     modelFamily: "Bahasa",
     baseProviderId: "ollama",
     description: "The Bahasa LLM model from Neosantara AI.",
-    tags: ["custom", "indonesian", "large"],
+    tags: ["pro", "testing", "text-generation"],
     contextWindow: 65536,
     inputCost: 0.0,
     outputCost: 0.0,
-    priceUnit: "free",
+    priceUnit: "pro",
     vision: false,
     tools: true,
     audio: false,
     reasoning: true,
     openSource: false,
-    speed: "Medium",
+    speed: "slow",
     intelligence: "High",
     website: "https://neosantara.xyz",
     apiDocs: "https://docs.neosantara.xyz",
-    modelPage: "https://api.neosantara.xyz/models/bahasa-llm",
+    modelPage: "https://neosantara.xyz/models",
     icon: "ollama",
     apiSdk: (apiKey?: string) =>
       openproviders(

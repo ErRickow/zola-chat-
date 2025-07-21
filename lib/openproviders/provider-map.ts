@@ -18,7 +18,6 @@ function isOllamaModel(modelId: string): boolean {
     /^nusantara-/, // Contoh: Jika ID model Anda dimulai dengan "nusantara-"
     /^archipelago-/,
     /^bahasa-/,
-    // Tambahkan pola lain yang sesuai dengan ID model kustom Anda
     /:latest$/i,
     /:[\d.]+[bB]?$/i, // versi tag seperti :7b, :13b, :1.5
   ];
