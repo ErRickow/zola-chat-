@@ -20,7 +20,7 @@ interface CreateCodeSnippetPayload {
  * Memerlukan autentikasi pengguna dan mengaitkan potongan kode dengan `user_id` yang terautentikasi.
  */
 export async function POST(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -95,7 +95,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const supabase = createSupabaseServerClient();
+  const supabase = await createClient();
   const { data: snippet, error } = await supabase
     .from("code_snippets")
     .select("*")
