@@ -13,6 +13,8 @@ export async function GET() {
     }
 
     // Mengambil obrolan yang public: true dan informasi pengguna terkait
+    const { data: { user } } = await supabase.auth.getUser();
+    
     const { data, error } = await supabase
       .from("chats")
       .select(
@@ -21,6 +23,7 @@ export async function GET() {
         title,
         created_at,
         model,
+        public,
         users (
           id,
           display_name,
@@ -28,15 +31,11 @@ export async function GET() {
         )
       `
       )
-      .eq("public", true) // Filter hanya obrolan publik
-      .order("created_at", { ascending: false }); // Urutkan dari yang terbaru
-
-    if (error) {
-      console.error("Error fetching public chats:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    // Memformat data untuk kemudahan penggunaan di frontend
+      .eq("public", true)
+      .order("created_at", { ascending: false });
+    
+    if (error) throw error;
+    
     const publicChats = data.map((chat) => ({
       id: chat.id,
       title: chat.title || "Untitled Chat",
@@ -48,7 +47,7 @@ export async function GET() {
         profileImage: chat.users?.profile_image,
       },
     }));
-
+    
     return NextResponse.json(publicChats);
   } catch (err: unknown) {
     console.error("Error in /api/explore-chats:", err);

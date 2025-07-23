@@ -36,11 +36,12 @@ export default function ExplorePage() {
     queryFn: async () => {
       const response = await fetch("/api/explore-chats")
       if (!response.ok) {
-        throw new Error("Failed to fetch public chats")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to fetch public chats")
       }
       return response.json()
     },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 5 * 60 * 1000,
   })
   
   if (error) {
