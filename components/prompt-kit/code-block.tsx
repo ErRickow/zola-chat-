@@ -47,7 +47,7 @@ function CodeBlockCode({
   language = "plaintext",
   className,
   status,
-  previewLines = 5,
+  previewLines = 10,
   showPreview = true,
   showHeader = true,
   snippetId: initialSnippetId, // Gunakan initialSnippetId agar bisa di-state lokal

@@ -140,7 +140,7 @@ export default async function ShareChat({
 
   // Menggunakan Promise.all untuk mensimulasikan loading asinkron
   // Ini akan memastikan skeleton terlihat saat data sedang diambil
-  await new Promise(resolve => setTimeout(resolve, 1000)); // Simulasi loading 1 detik
+  await new Promise(resolve => setTimeout(resolve, 3000));
 
   return (
     <CodeBlockFullScreenProvider>

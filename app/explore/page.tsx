@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { isSupabaseEnabled } from "@/lib/supabase/config"
 import { notFound } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
 
 type PublicChat = {
   id: string
@@ -27,6 +28,18 @@ type PublicChat = {
 export default function ExplorePage() {
   if (!isSupabaseEnabled) {
     return notFound()
+  }
+  if (isSupabaseEnabled) {
+    const supabase = await createClient()
+    if (!supabase) {
+      return notFound()
+    }
+    if (supabase) {
+      const { data: userData, error: userError } = await supabase.auth.getUser()
+      if (userError || !userData?.user) {
+        redirect("/")
+      }
+    }
   }
   
   const { data: publicChats, isLoading, error } = useQuery<PublicChat[]>({
