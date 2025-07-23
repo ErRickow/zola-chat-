@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import type { SourceUIPart } from "@ai-sdk/ui-utils"
-import { CaretDown, Link } from "@phosphor-icons/react"
+import { CaretDown, Link as LinkIcon } from "@phosphor-icons/react"
 import { AnimatePresence, motion } from "motion/react"
 import Image from "next/image"
 import { useState } from "react"
@@ -10,7 +10,7 @@ import { addUTM, formatUrl, getFavicon } from "./utils"
 
 type SourcesListProps = {
   sources: SourceUIPart["source"][]
-  className?: string
+  className ? : string
 }
 
 const TRANSITION = {
@@ -21,12 +21,12 @@ const TRANSITION = {
 
 export function SourcesList({ sources, className }: SourcesListProps) {
   const [isExpanded, setIsExpanded] = useState(false)
-  const [failedFavicons, setFailedFavicons] = useState<Set<string>>(new Set())
-
+  const [failedFavicons, setFailedFavicons] = useState < Set < string >> (new Set())
+  
   const handleFaviconError = (url: string) => {
     setFailedFavicons((prev) => new Set(prev).add(url))
   }
-
+  
   return (
     <div className={cn("my-4", className)}>
       <div className="border-border flex flex-col gap-0 overflow-hidden rounded-md border">
@@ -46,8 +46,11 @@ export function SourcesList({ sources, className }: SourcesListProps) {
                 return showFallback ? (
                   <div
                     key={`${source.url}-${index}`}
-                    className="bg-muted border-background h-4 w-4 rounded-full border"
-                  />
+                    className="bg-muted border-background h-4 w-4 rounded-full border flex items-center justify-center"
+                    title={`Favicon tidak tersedia untuk ${source.title || source.url}`}
+                  >
+                    <LinkIcon className="h-3 w-3 text-muted-foreground" /> {/* Menggunakan ikon tautan */}
+                  </div>
                 ) : (
                   <Image
                     key={`${source.url}-${index}`}
@@ -100,7 +103,12 @@ export function SourcesList({ sources, className }: SourcesListProps) {
                           className="text-primary group line-clamp-1 flex items-center gap-1 hover:underline"
                         >
                           {showFallback ? (
-                            <div className="bg-muted h-4 w-4 flex-shrink-0 rounded-full" />
+                            <div
+                                className="bg-muted h-4 w-4 flex-shrink-0 rounded-full flex items-center justify-center"
+                                title={`Favicon tidak tersedia untuk ${source.title || source.url}`}
+                            >
+                                <LinkIcon className="h-3 w-3 text-muted-foreground" />
+                            </div>
                           ) : (
                             <Image
                               src={faviconUrl}
@@ -112,7 +120,8 @@ export function SourcesList({ sources, className }: SourcesListProps) {
                             />
                           )}
                           <span className="truncate">{source.title}</span>
-                          <Link className="inline h-3 w-3 flex-shrink-0 opacity-70 transition-opacity group-hover:opacity-100" />
+                          {/* Ikon Link yang sudah ada di sebelah judul sumber */}
+                          <LinkIcon className="inline h-3 w-3 flex-shrink-0 opacity-70 transition-opacity group-hover:opacity-100" />
                         </a>
                         <div className="text-muted-foreground line-clamp-1 text-xs">
                           {formatUrl(source.url)}
