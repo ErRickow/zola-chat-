@@ -6,7 +6,7 @@ import {
   CodeBlockGroup
 } from "@/components/prompt-kit/code-block";
 
-// Definisi tipe untuk data snippet (pastikan ini sesuai dengan respons API Anda)
+// Definisi tipe untuk data snippet
 interface CodeSnippetData {
   id: string;
   code_content: string;
@@ -17,8 +17,6 @@ interface CodeSnippetData {
   created_at: string;
   is_public: boolean;
 }
-
-// Tidak perlu mendefinisikan SnippetPageProps secara terpisah jika kita menuliskannya secara inline
 
 async function getCodeSnippet(snippetId: string): Promise<CodeSnippetData | null> {
   try {
@@ -42,13 +40,17 @@ async function getCodeSnippet(snippetId: string): Promise<CodeSnippetData | null
   }
 }
 
-// KOREKSI UTAMA DI SINI: Definisi tipe `params` langsung secara inline
+// KOREKSI UTAMA DI SINI: Memaksa `params` menjadi tipe Promise
 export default async function SnippetPage({
   params,
 }: {
-  params: { snippetId: string }; // Definisikan params langsung sebagai objek
+  // Memaksa params menjadi Promise<...> sesuai dengan pesan error
+  params: Promise<{ snippetId: string }>;
 }) {
-  const snippet = await getCodeSnippet(params.snippetId); // Akses params langsung
+  // Meng-await params karena sekarang didefinisikan sebagai Promise
+  const { snippetId } = await params;
+
+  const snippet = await getCodeSnippet(snippetId);
 
   if (!snippet) {
     notFound(); // Tampilkan halaman 404 jika snippet tidak ditemukan atau tidak diizinkan
