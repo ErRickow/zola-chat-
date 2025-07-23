@@ -21,6 +21,9 @@ interface CreateCodeSnippetPayload {
  */
 export async function POST(request: Request) {
   const supabase = await createClient();
+  if (!supabase) {
+    return NextResponse.json({ error: "Supabase client not initialized." }, { status: 500 });
+  }
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -96,6 +99,9 @@ export async function GET(request: Request) {
   }
 
   const supabase = await createClient();
+  if (!supabase) {
+    return NextResponse.json({ error: "Supabase client not initialized." }, { status: 500 });
+  }
   const { data: snippet, error } = await supabase
     .from("code_snippets")
     .select("*")
