@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
-import { APP_DOMAIN } from "@/lib/config"
+import { APP_DOMAIN } from "@/lib/config"; 
 import {
   CodeBlockCode,
-  CodeBlock,     // KOREKSI: Import CodeBlock dari prompt-kit/code-block
-  CodeBlockGroup // KOREKSI: Import CodeBlockGroup dari prompt-kit/code-block
+  CodeBlock,
+  CodeBlockGroup
 } from "@/components/prompt-kit/code-block";
 
+// Definisi tipe untuk data snippet (pastikan ini sesuai dengan respons API Anda)
 interface CodeSnippetData {
   id: string;
   code_content: string;
@@ -17,22 +18,25 @@ interface CodeSnippetData {
   is_public: boolean;
 }
 
+// KOREKSI: Definisi interface untuk props halaman Next.js
+// Next.js secara otomatis menyediakan `params` sebagai objek
+// dengan kunci yang sesuai dengan nama folder dinamis ([snippetId])
 interface SnippetPageProps {
   params: {
-    snippetId: string;
+    snippetId: string; // Nama parameter harus sesuai dengan nama folder dinamis
   };
 }
 
 async function getCodeSnippet(snippetId: string): Promise<CodeSnippetData | null> {
   try {
-    // Gunakan variabel lingkungan untuk URL API
+    // Gunakan APP_DOMAIN yang sudah diimpor
     const response = await fetch(
       `${APP_DOMAIN}/api/code-snippets?id=${snippetId}`,
       { cache: "no-store" } // Pastikan data selalu terbaru
     );
 
     if (response.status === 404 || response.status === 403) {
-      return null; // Tidak ditemukan atau tidak diizinkan oleh RLS
+      return null; // Tidak ditemukan atau tidak diizinkan
     }
 
     if (!response.ok) {
@@ -63,7 +67,7 @@ export default async function SnippetPage({ params }: SnippetPageProps) {
       )}
 
       <div className="w-full max-w-3xl">
-        <CodeBlock> {/* Sekarang diimpor dari prompt-kit/code-block */}
+        <CodeBlock>
             <CodeBlockGroup className="flex h-9 items-center justify-between px-4 rounded-t-xl bg-muted/50">
                 <div className="text-muted-foreground py-1 pr-2 font-mono text-xs">
                     {snippet.language}

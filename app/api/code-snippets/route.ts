@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { Database } from "@/app/types/database.types";
 
@@ -20,7 +20,7 @@ interface CreateCodeSnippetPayload {
  * Memerlukan autentikasi pengguna dan mengaitkan potongan kode dengan `user_id` yang terautentikasi.
  */
 export async function POST(request: Request) {
-  const supabase = createSupabaseServerClient();
+  const supabase = createClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
