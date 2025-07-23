@@ -51,20 +51,15 @@ const INITIAL_COMPONENTS: Partial<Components> = {
     }
 
     const language = extractLanguage(className)
+    const snippetId = props.node?.properties?.["data-snippet-id"] as string | undefined;
 
     return (
       <CodeBlock className={className}>
         <CodeBlockGroup className="flex h-9 items-center justify-between px-4">
-          <div className="text-muted-foreground py-1 pr-2 font-mono text-xs">
-            {language}
-          </div>
         </CodeBlockGroup>
         <div className="sticky top-16 lg:top-0">
-          <div className="absolute right-0 bottom-0 flex h-9 items-center pr-1.5">
-            <ButtonCopy code={children as string} />
-          </div>
         </div>
-        <CodeBlockCode code={children as string} language={language} />
+        <CodeBlockCode code={children as string} language={language} snippetId={snippetId} />
       </CodeBlock>
     )
   },

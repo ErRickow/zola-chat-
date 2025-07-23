@@ -1,4 +1,5 @@
 import { ChatContainer } from "@/app/components/chat/chat-container"
+import { CodeBlockFullScreenProvider } from "@/app/context/code-block-fullscreen-context";
 import { LayoutApp } from "@/app/components/layout/layout-app"
 import { MessagesProvider } from "@/lib/chat-store/messages/provider"
 import { isSupabaseEnabled } from "@/lib/supabase/config"
@@ -15,12 +16,14 @@ export default async function Page() {
       }
     }
   }
-
+  
   return (
-    <MessagesProvider>
-      <LayoutApp>
-        <ChatContainer />
-      </LayoutApp>
-    </MessagesProvider>
+    <CodeBlockFullScreenProvider>
+      <MessagesProvider>
+        <LayoutApp>
+          <ChatContainer />
+        </LayoutApp>
+      </MessagesProvider>
+    </CodeBlockFullScreenProvider>
   )
 }

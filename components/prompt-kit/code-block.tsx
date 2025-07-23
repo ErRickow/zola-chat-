@@ -1,18 +1,19 @@
-"use client"
+"use client";
 
-import { cn } from "@/lib/utils"
-import { useTheme } from "next-themes"
-import React, { useState, useEffect } from "react"
-import { ButtonCopy } from "../common/button-copy"
-import { CodeMirrorEditor } from "../common/CodeMirror"
-import { Code, ShareFat, X, ArrowsOutSimple } from "@phosphor-icons/react"
-import { toast } from "@/components/ui/toast"
-import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
+import React, { useState, useEffect } from "react";
+import { ButtonCopy } from "../common/button-copy";
+import { CodeMirrorEditor } from "../common/CodeMirror";
+import { Code, ShareFat, X, ArrowsOutSimple } from "@phosphor-icons/react";
+import { toast } from "@/components/ui/toast";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCodeBlockFullScreen } from "@/app/context/code-block-fullscreen-context";
 
 export type CodeBlockProps = {
-  children?: React.ReactNode
-  className?: string
-} & React.HTMLProps<HTMLDivElement>
+  children?: React.ReactNode;
+  className?: string;
+} & React.HTMLProps<HTMLDivElement>;
 
 function CodeBlock({ children, className, ...props }: CodeBlockProps) {
   return (
@@ -26,19 +27,20 @@ function CodeBlock({ children, className, ...props }: CodeBlockProps) {
     >
       {children}
     </div>
-  )
+  );
 }
 
 export type CodeBlockCodeProps = {
-  code: string
-  language?: string
-  theme?: string
-  className?: string
-  status?: "streaming" | "ready" | "submitted" | "error"
-  previewLines?: number
-  showPreview?: boolean
-  showHeader?: boolean
-} & React.HTMLProps<HTMLDivElement>
+  code: string;
+  language?: string;
+  theme?: string;
+  className?: string;
+  status?: "streaming" | "ready" | "submitted" | "error";
+  previewLines?: number;
+  showPreview?: boolean;
+  showHeader?: boolean;
+  snippetId?: string; // Prop untuk ID potongan kode
+} & React.HTMLProps<HTMLDivElement>;
 
 function CodeBlockCode({
   code,
@@ -48,60 +50,104 @@ function CodeBlockCode({
   previewLines = 5,
   showPreview = true,
   showHeader = true,
+  snippetId: initialSnippetId, // Gunakan initialSnippetId agar bisa di-state lokal
   ...props
 }: CodeBlockCodeProps) {
-  const { resolvedTheme: appTheme } = useTheme()
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const { resolvedTheme: appTheme } = useTheme();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [snippetId, setSnippetId] = useState(initialSnippetId); // State lokal untuk snippet ID
+  const { setIsFullScreenCodeBlockOpen } = useCodeBlockFullScreen(); // Gunakan hook konteks
 
-  const currentTheme = appTheme === "dark" ? "dark" : "light"
+  const currentTheme = appTheme === "dark" ? "dark" : "light";
 
   // Hitung apakah kode perlu dipotong untuk preview
-  const codeLines = code.split('\n')
-  const needsPreview = showPreview && codeLines.length > previewLines
-  const previewCode = needsPreview ? codeLines.slice(0, previewLines).join('\n') : code
+  const codeLines = code.split("\n");
+  const needsPreview = showPreview && codeLines.length > previewLines;
+  const previewCode = needsPreview ? codeLines.slice(0, previewLines).join("\n") : code;
 
-  // Handle escape key untuk menutup modal
+  // Handle escape key untuk menutup modal & Update status global
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isModalOpen) {
-        setIsModalOpen(false)
+      if (e.key === "Escape" && isModalOpen) {
+        setIsModalOpen(false);
       }
-    }
-    
-    document.addEventListener('keydown', handleEscape)
-    return () => document.removeEventListener('keydown', handleEscape)
-  }, [isModalOpen])
+    };
 
-  // Prevent body scroll ketika modal open
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isModalOpen]);
+
+  // Prevent body scroll ketika modal open & Update status global untuk chat input
   useEffect(() => {
     if (isModalOpen) {
-      document.body.style.overflow = 'hidden'
+      document.body.style.overflow = "hidden";
+      setIsFullScreenCodeBlockOpen(true); // Set status global ke true
     } else {
-      document.body.style.overflow = 'auto'
+      document.body.style.overflow = "auto";
+      setIsFullScreenCodeBlockOpen(false); // Set status global ke false
     }
-    
+
     return () => {
-      document.body.style.overflow = 'auto'
-    }
-  }, [isModalOpen])
+      document.body.style.overflow = "auto";
+      setIsFullScreenCodeBlockOpen(false); // Pastikan false saat unmount
+    };
+  }, [isModalOpen, setIsFullScreenCodeBlockOpen]);
 
   const handleShareCode = async () => {
-    try {
-      await navigator.clipboard.writeText(code)
+    if (snippetId) {
+      // Jika sudah ada snippetId, berarti sudah pernah di-share, langsung copy link
+      const shareLink = `${window.location.origin}/snippets/${snippetId}`;
+      navigator.clipboard.writeText(shareLink);
       toast({
-        title: "Code copied to clipboard!",
-        status: "success",
-      })
-    } catch (error) {
-      console.error("Failed to copy code:", error)
-      toast({
-        title: "Failed to copy code to clipboard.",
-        status: "error",
-      })
+        title: "Link copied to clipboard!",
+        status: "success" // Menggunakan status yang sesuai dengan komponen toast Anda
+      });
+      return;
     }
-  }
 
-  const isLoading = status === "streaming" || status === "submitted"
+    // Jika belum ada snippetId, panggil API untuk menyimpannya
+    try {
+      const response = await fetch("/api/code-snippets", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          code_content: code,
+          language: language,
+          title: `Code Snippet - ${language}`, // Judul default
+          description: "Shared from chat", // Deskripsi default
+          is_public: true // Snippet dibuat publik secara default saat di-share
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to share code snippet.");
+      }
+
+      const data = await response.json();
+      setSnippetId(data.id); // Perbarui state dengan ID baru
+      toast({
+        title: "Code snippet shared successfully!",
+        status: "success"
+      });
+      const shareLink = `${window.location.origin}/snippets/${data.id}`;
+      navigator.clipboard.writeText(shareLink);
+      toast({
+        title: "Link copied to clipboard!",
+        status: "success",
+        description: shareLink // Jika komponen toast Anda mendukung deskripsi
+      });
+    } catch (error) {
+      console.error("Failed to share snippet:", error);
+      toast({
+        title: "Failed to share code snippet.",
+        status: "error"
+      });
+    }
+  };
+
+  const isLoading = status === "streaming" || status === "submitted";
 
   return (
     <>
@@ -110,9 +156,37 @@ function CodeBlockCode({
         {/* Header */}
         {showHeader && (
           <CodeBlockGroup className="flex h-9 items-center justify-between px-4 rounded-t-xl bg-muted/50">
-            
-            <div className="flex gap-1">
-              
+            <div className="flex gap-1 items-center">
+              {/* Tampilkan bahasa dan ID snippet di header */}
+              <span className="text-muted-foreground pr-2 font-mono text-xs">
+                {language}
+              </span>
+              {snippetId && (
+                <span className="ml-1 text-primary text-xs">
+                  ID:{" "}
+                  <a
+                    href={`/snippets/${snippetId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:no-underline"
+                    title="View shared snippet"
+                  >
+                    {snippetId.substring(0, 8)}...
+                  </a>
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <ButtonCopy code={code} />
+              <button
+                onClick={handleShareCode}
+                type="button"
+                className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-xs font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-ring bg-transparent hover:bg-secondary/50 h-8 px-2"
+                title={snippetId ? "Copy Shared Link" : "Share Code Snippet"}
+              >
+                <ShareFat className="size-3" />
+              </button>
               {needsPreview && (
                 <button
                   onClick={() => setIsModalOpen(true)}
@@ -135,7 +209,7 @@ function CodeBlockCode({
         ) : (
           <div className="relative">
             {/* Container untuk CodeMirror preview */}
-            <div 
+            <div
               className={cn(
                 "relative overflow-hidden transition-all duration-300",
                 !showHeader && "rounded-t-xl",
@@ -187,10 +261,13 @@ function CodeBlockCode({
                     </h2>
                     <p className="text-sm text-muted-foreground">
                       {codeLines.length} lines
+                      {snippetId && (
+                        <span className="ml-2 text-primary">ID: {snippetId.substring(0, 8)}...</span>
+                      )}
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleShareCode}
@@ -225,10 +302,10 @@ function CodeBlockCode({
         </div>
       )}
     </>
-  )
+  );
 }
 
-export type CodeBlockGroupProps = React.HTMLAttributes<HTMLDivElement>
+export type CodeBlockGroupProps = React.HTMLAttributes<HTMLDivElement>;
 
 function CodeBlockGroup({
   children,
@@ -242,7 +319,7 @@ function CodeBlockGroup({
     >
       {children}
     </div>
-  )
+  );
 }
 
-export { CodeBlockGroup, CodeBlockCode, CodeBlock }
+export { CodeBlockGroup, CodeBlockCode, CodeBlock };

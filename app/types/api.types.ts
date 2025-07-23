@@ -4,23 +4,25 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 
 export type SupabaseClientType = SupabaseClient<Database>
 
+// app/types/api.types.ts
 export interface ContentPart {
   type: string
-  text?: string
-  toolCallId?: string
-  toolName?: string
-  args?: Json
-  result?: Json
-  toolInvocation?: {
+  text ? : string
+  toolCallId ? : string
+  toolName ? : string
+  args ? : Json
+  result ? : Json
+  toolInvocation ? : {
     state: string
     step: number
     toolCallId: string
     toolName: string
-    args?: Json
-    result?: Json
+    args ? : Json
+    result ? : Json
   }
-  reasoning?: string
-  details?: Json[]
+  reasoning ? : string
+  details ? : Json[]
+  snippetId ? : string; 
 }
 
 export interface Message {

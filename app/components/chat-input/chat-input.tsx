@@ -7,6 +7,7 @@ import {
   PromptInputActions,
   PromptInputTextarea,
 } from "@/components/prompt-kit/prompt-input"
+import { useCodeBlockFullScreen } from "@/app/context/code-block-fullscreen-context";
 import { Button } from "@/components/ui/button"
 import { getModelInfo } from "@/lib/models"
 import { ArrowUpIcon, StopIcon } from "@phosphor-icons/react"
@@ -54,6 +55,12 @@ export function ChatInput({
   setEnableSearch,
   enableSearch,
 }: ChatInputProps) {
+  const { isFullScreenCodeBlockOpen } = useCodeBlockFullScreen(); // BARU: Gunakan hook konteks
+
+  // BARU: Jika modal full screen terbuka, jangan render ChatInput
+  if (isFullScreenCodeBlockOpen) {
+    return null;
+  }
   const selectModelConfig = getModelInfo(selectedModel)
   const hasSearchSupport = Boolean(selectModelConfig?.webSearch)
   const isOnlyWhitespace = (text: string) => !/[^\s]/.test(text)
