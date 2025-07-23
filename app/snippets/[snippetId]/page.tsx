@@ -5,6 +5,7 @@ import {
   CodeBlock,
   CodeBlockGroup
 } from "@/components/prompt-kit/code-block";
+import { CodeBlockFullScreenProvider } from "@/app/context/code-block-fullscreen-context";
 
 // Definisi tipe untuk data snippet
 interface CodeSnippetData {
@@ -57,6 +58,7 @@ export default async function SnippetPage({
   }
 
   return (
+    <CodeBlockFullScreenProvider>
     <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
       <h1 className="text-2xl font-bold mb-4">
         Shared Code Snippet: {snippet.title || "Untitled"}
@@ -87,5 +89,6 @@ export default async function SnippetPage({
         </p>
       </div>
     </div>
+    </CodeBlockFullScreenProvider>
   );
 }

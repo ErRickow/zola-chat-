@@ -4,7 +4,6 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 
 export type SupabaseClientType = SupabaseClient<Database>
 
-// app/types/api.types.ts
 export interface ContentPart {
   type: string
   text ? : string

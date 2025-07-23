@@ -5,6 +5,7 @@ import type { Metadata } from "next"
 import { notFound, redirect } from "next/navigation"
 import Article from "./article"
 import { Skeleton } from "@/components/ui/skeleton"
+import { CodeBlockFullScreenProvider } from "@/app/context/code-block-fullscreen-context";
 import React from "react"
 
 export const dynamic = "force-static"
@@ -142,6 +143,7 @@ export default async function ShareChat({
   await new Promise(resolve => setTimeout(resolve, 1000)); // Simulasi loading 1 detik
 
   return (
+    <CodeBlockFullScreenProvider>
     <React.Suspense fallback={<LoadingSkeleton />}>
       <Article
         id={chatData.id}
@@ -152,5 +154,6 @@ export default async function ShareChat({
         publisherInfo={chatData.users}
       />
     </React.Suspense>
+    </CodeBlockFullScreenProvider>
   )
 }
