@@ -29,14 +29,13 @@ export function Header({ hasSidebar }: { hasSidebar: boolean }) {
         <div className="flex flex-1 items-center justify-between">
           <div className="-ml-0.5 flex flex-1 items-center gap-2 lg:-ml-2.5">
             <div className="flex flex-1 items-center gap-2">
+              {hasSidebar && isMobile && <HeaderSidebarTrigger />}
               <Link
                 href="/"
                 className="pointer-events-auto inline-flex items-center text-xl font-medium tracking-tight"
               >
-                <NeosantaraLogo className="mr-1 dark:invert" />
                 <NeosantaraLogoText className="dark:invert" />
               </Link>
-              {hasSidebar && isMobile && <HeaderSidebarTrigger />}
             </div>
           </div>
           <div />
