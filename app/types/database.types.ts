@@ -345,6 +345,57 @@ export type Database = {
           },
         ]
       }
+      code_snippets: {
+        Row: {
+          id: string
+          code_content: string
+          language: string
+          title: string | null
+          description: string | null
+          chat_id: string | null
+          user_id: string | null
+          is_public: boolean
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          code_content: string
+          language: string
+          title?: string | null
+          description?: string | null
+          chat_id?: string | null
+          user_id?: string | null
+          is_public?: boolean
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          code_content?: string
+          language?: string
+          title?: string | null
+          description?: string | null
+          chat_id?: string | null
+          user_id?: string | null
+          is_public?: boolean
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "code_snippets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "code_snippets_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
