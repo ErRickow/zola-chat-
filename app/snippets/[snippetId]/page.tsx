@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { APP_DOMAIN } from "@/lib/config"; 
+import { APP_DOMAIN } from "@/lib/config";
 import {
   CodeBlockCode,
   CodeBlock,
@@ -18,25 +18,17 @@ interface CodeSnippetData {
   is_public: boolean;
 }
 
-// KOREKSI: Definisi interface untuk props halaman Next.js
-// Next.js secara otomatis menyediakan `params` sebagai objek
-// dengan kunci yang sesuai dengan nama folder dinamis ([snippetId])
-interface SnippetPageProps {
-  params: {
-    snippetId: string; // Nama parameter harus sesuai dengan nama folder dinamis
-  };
-}
+// Tidak perlu mendefinisikan SnippetPageProps secara terpisah jika kita menuliskannya secara inline
 
 async function getCodeSnippet(snippetId: string): Promise<CodeSnippetData | null> {
   try {
-    // Gunakan APP_DOMAIN yang sudah diimpor
     const response = await fetch(
       `${APP_DOMAIN}/api/code-snippets?id=${snippetId}`,
       { cache: "no-store" } // Pastikan data selalu terbaru
     );
 
     if (response.status === 404 || response.status === 403) {
-      return null; // Tidak ditemukan atau tidak diizinkan
+      return null; // Tidak ditemukan atau tidak diizinkan oleh RLS
     }
 
     if (!response.ok) {
@@ -50,8 +42,13 @@ async function getCodeSnippet(snippetId: string): Promise<CodeSnippetData | null
   }
 }
 
-export default async function SnippetPage({ params }: SnippetPageProps) {
-  const snippet = await getCodeSnippet(params.snippetId);
+// KOREKSI UTAMA DI SINI: Definisi tipe `params` langsung secara inline
+export default async function SnippetPage({
+  params,
+}: {
+  params: { snippetId: string }; // Definisikan params langsung sebagai objek
+}) {
+  const snippet = await getCodeSnippet(params.snippetId); // Akses params langsung
 
   if (!snippet) {
     notFound(); // Tampilkan halaman 404 jika snippet tidak ditemukan atau tidak diizinkan
