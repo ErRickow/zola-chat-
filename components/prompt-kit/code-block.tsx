@@ -5,7 +5,7 @@ import { useTheme } from "next-themes";
 import React, { useState, useEffect } from "react";
 import { ButtonCopy } from "../common/button-copy";
 import { CodeMirrorEditor } from "../common/CodeMirror";
-import { Code, ShareFat, X, ArrowsOutSimple } from "@phosphor-icons/react";
+import { Code, ShareFat, ArrowSquareRight, ArrowsOutSimple } from "@phosphor-icons/react";
 import { toast } from "@/components/ui/toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCodeBlockFullScreen } from "@/app/context/code-block-fullscreen-context";
@@ -178,15 +178,6 @@ function CodeBlockCode({
             </div>
 
             <div className="flex items-center gap-2">
-              <ButtonCopy code={code} />
-              <button
-                onClick={handleShareCode}
-                type="button"
-                className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-xs font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-ring bg-transparent hover:bg-secondary/50 h-8 px-2"
-                title={snippetId ? "Copy Shared Link" : "Share Code Snippet"}
-              >
-                <ShareFat className="size-3" />
-              </button>
               {needsPreview && (
                 <button
                   onClick={() => setIsModalOpen(true)}
@@ -269,6 +260,7 @@ function CodeBlockCode({
                 </div>
 
                 <div className="flex items-center gap-2">
+                  <ButtonCopy code={code} />
                   <button
                     onClick={handleShareCode}
                     type="button"
@@ -282,8 +274,7 @@ function CodeBlockCode({
                     type="button"
                     className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-ring bg-secondary hover:bg-secondary/80 text-secondary-foreground h-9 px-3"
                   >
-                    <X className="size-4" />
-                    Close
+                    <ArrowSquareRight className="size-4" />
                   </button>
                 </div>
               </div>

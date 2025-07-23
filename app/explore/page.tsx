@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { isSupabaseEnabled } from "@/lib/supabase/config"
 import { notFound } from "next/navigation"
+import { CodeBlockFullScreenProvider } from "@/app/context/code-block-fullscreen-context";
 
 type PublicChat = {
   id: string
@@ -54,6 +55,7 @@ export default function ExplorePage() {
   }
 
   return (
+    <CodeBlockFullScreenProvider>
     <LayoutApp>
       <div className="container mx-auto max-w-4xl py-12 px-4 sm:px-6 lg:px-8">
         <h1 className="text-4xl font-medium tracking-tight text-center mb-10">
@@ -124,5 +126,6 @@ export default function ExplorePage() {
         )}
       </div>
     </LayoutApp>
+    </CodeBlockFullScreenProvider>
   )
 }

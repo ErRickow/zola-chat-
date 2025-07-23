@@ -57,8 +57,6 @@ const INITIAL_COMPONENTS: Partial<Components> = {
       <CodeBlock className={className}>
         <CodeBlockGroup className="flex h-9 items-center justify-between px-4">
         </CodeBlockGroup>
-        <div className="sticky top-16 lg:top-0">
-        </div>
         <CodeBlockCode code={children as string} language={language} snippetId={snippetId} />
       </CodeBlock>
     )
