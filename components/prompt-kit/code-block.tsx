@@ -5,7 +5,7 @@ import { useTheme } from "next-themes";
 import React, { useState, useEffect, memo } from "react";
 import { ButtonCopy } from "../common/button-copy";
 import { CodeMirrorEditor as CodeMirrorEditorBase } from "../common/CodeMirror";
-import { Code, ShareFat, ArrowSquareRight, ArrowsOutSimple } from "@phosphor-icons/react";
+import { BracketsCurly, ShareNetwork, X, ArrowsOut } from "@phosphor-icons/react";
 import { toast } from "@/components/ui/toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCodeBlockFullScreen } from "@/app/context/code-block-fullscreen-context";
@@ -161,7 +161,7 @@ function CodeBlockCode({
                   title="View fullscreen"
                   aria-label="View code in fullscreen mode"
                 >
-                  <ArrowsOutSimple className="size-3" />
+                  <ArrowsOut className="size-3" />
                 </button>
               )}
             </div>
@@ -183,7 +183,6 @@ function CodeBlockCode({
                 "relative overflow-hidden transition-all duration-300",
                 !showHeader && "rounded-t-xl",
                 "rounded-b-xl",
-                // Atur tinggi dinamis berdasarkan jumlah baris
                 codeLines.length <= previewLines ? "min-h-[60px] max-h-[300px]" : "h-[300px]"
               )}
             >
@@ -207,7 +206,7 @@ function CodeBlockCode({
                     )}
                     aria-label="View full code"
                   >
-                    <Code className="size-4" />
+                    <BracketsCurly className="size-4" />
                     View full code ({codeLines.length} lines)
                   </button>
                 </div>
@@ -218,13 +217,24 @@ function CodeBlockCode({
       </CodeBlock>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+        <div
+          className={cn(
+            "fixed inset-0 z-50 bg-background/80 backdrop-blur-sm transition-opacity duration-300",
+            isModalOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          )}
+        >
           <div className="fixed inset-0 bg-background/95" />
-          <div className="fixed inset-4 sm:inset-6 md:inset-8 lg:inset-12 max-w-7xl mx-auto">
+          <div
+            className={cn(
+              "fixed inset-4 sm:inset-6 md:inset-8 lg:inset-12 max-w-7xl mx-auto",
+              "transition-transform duration-300 transform",
+              isModalOpen ? "scale-100" : "scale-95"
+            )}
+          >
             <div className="h-full w-full bg-card border border-border rounded-xl shadow-2xl flex flex-col">
               <div className="flex h-14 items-center justify-between px-6 border-b border-border bg-muted/30 rounded-t-xl">
                 <div className="flex items-center gap-3">
-                  <Code className="size-5 text-muted-foreground" />
+                  <BracketsCurly className="size-5 text-muted-foreground" />
                   <div>
                     <h2 className="text-lg font-semibold text-foreground">{language.toUpperCase()} Code</h2>
                     <p className="text-sm text-muted-foreground">
@@ -247,7 +257,7 @@ function CodeBlockCode({
                     )}
                     aria-label="Share code"
                   >
-                    <ShareFat className="size-4" />
+                    <ShareNetwork className="size-4" />
                     Share
                   </button>
                   <button
@@ -260,7 +270,7 @@ function CodeBlockCode({
                     )}
                     aria-label="Close fullscreen"
                   >
-                    <ArrowSquareRight className="size-4" />
+                    <X className="size-4" />
                   </button>
                 </div>
               </div>
