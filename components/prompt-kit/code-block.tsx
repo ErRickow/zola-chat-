@@ -77,7 +77,7 @@ function CodeBlockCode({
 
   const handleShareCode = async () => {
     if (snippetId) {
-      const shareLink = `${window.location.origin}/snippets/${snippetId}`;
+      const shareLink = `${window.location.origin}/artifacts/${snippetId}`;
       await navigator.clipboard.writeText(shareLink);
       toast({
         title: "Link copied to clipboard!",
@@ -88,7 +88,7 @@ function CodeBlockCode({
     }
 
     try {
-      const response = await fetch("/api/code-snippets", {
+      const response = await fetch("/api/code-artifacts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -107,7 +107,7 @@ function CodeBlockCode({
 
       const data = await response.json();
       setSnippetId(data.id);
-      const shareLink = `${window.location.origin}/snippets/${data.id}`;
+      const shareLink = `${window.location.origin}/artifacts/${data.id}`;
       await navigator.clipboard.writeText(shareLink);
       toast({
         title: "Code snippet shared successfully!",
@@ -137,7 +137,7 @@ function CodeBlockCode({
                 <span className="ml-1 text-primary text-xs">
                   ID:{" "}
                   <a
-                    href={`/snippets/${snippetId}`}
+                    href={`/artifacts/${snippetId}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="underline hover:no-underline"

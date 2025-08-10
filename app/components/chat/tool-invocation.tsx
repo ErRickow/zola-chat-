@@ -13,7 +13,20 @@ import {
 } from "@phosphor-icons/react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useMemo, useState } from "react"
-import { Weather } from "./weater"
+
+// Type definitions for better type safety
+interface SearchResult {
+  url: string
+  title: string
+  snippet?: string
+}
+
+interface WeatherData {
+  current: {
+    temperature: number
+    condition: string
+  }
+}
 
 interface ToolInvocationProps {
   toolInvocations: ToolInvocationUIPart[]
@@ -21,8 +34,20 @@ interface ToolInvocationProps {
   defaultOpen?: boolean
 }
 
+interface SingleToolViewProps {
+  toolInvocations: ToolInvocationUIPart[]
+  defaultOpen?: boolean
+  className?: string
+}
+
+interface SingleToolCardProps {
+  toolData: ToolInvocationUIPart
+  defaultOpen?: boolean
+  className?: string
+}
+
 const TRANSITION = {
-  type: "spring",
+  type: "spring" as const,
   duration: 0.2,
   bounce: 0,
 }
@@ -63,14 +88,16 @@ export function ToolInvocation({
     )
   }
 
+  const handleToggleExpansion = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+    setIsExpanded(!isExpanded)
+  }
+
   return (
     <div className="mb-10">
       <div className="border-border flex flex-col gap-0 overflow-hidden rounded-md border">
         <button
-          onClick={(e) => {
-            e.preventDefault()
-            setIsExpanded(!isExpanded)
-          }}
+          onClick={handleToggleExpansion}
           type="button"
           className="hover:bg-accent flex w-full flex-row items-center rounded-t-md px-3 py-2 transition-colors"
         >
@@ -126,12 +153,6 @@ export function ToolInvocation({
   )
 }
 
-type SingleToolViewProps = {
-  toolInvocations: ToolInvocationUIPart[]
-  defaultOpen?: boolean
-  className?: string
-}
-
 function SingleToolView({
   toolInvocations,
   defaultOpen = false,
@@ -150,7 +171,7 @@ function SingleToolView({
     {} as Record<string, ToolInvocationUIPart[]>
   )
 
-  // For each toolCallId, get the most informative state (result > call > requested)
+  // For each toolCallId, get the most informative state (result > call > partial-call)
   const toolsToDisplay = Object.values(groupedTools)
     .map((group) => {
       const resultTool = group.find(
@@ -166,7 +187,7 @@ function SingleToolView({
       // Return the most informative one
       return resultTool || callTool || partialCallTool
     })
-    .filter(Boolean) as ToolInvocationUIPart[]
+    .filter((tool): tool is ToolInvocationUIPart => Boolean(tool))
 
   if (toolsToDisplay.length === 0) return null
 
@@ -197,16 +218,11 @@ function SingleToolView({
   )
 }
 
-// New component to handle individual tool cards
 function SingleToolCard({
   toolData,
   defaultOpen = false,
   className,
-}: {
-  toolData: ToolInvocationUIPart
-  defaultOpen?: boolean
-  className?: string
-}) {
+}: SingleToolCardProps) {
   const [isExpanded, setIsExpanded] = useState(defaultOpen)
   const { toolInvocation } = toolData
   const { state, toolName, toolCallId, args } = toolInvocation
@@ -249,87 +265,105 @@ function SingleToolCard({
   }, [isCompleted, result])
 
   // Format the arguments for display
-  const formattedArgs = args
-    ? Object.entries(args).map(([key, value]) => (
-        <div key={key} className="mb-1">
-          <span className="text-muted-foreground font-medium">{key}:</span>{" "}
-          <span className="font-mono">
-            {typeof value === "object"
-              ? value === null
-                ? "null"
-                : Array.isArray(value)
-                  ? value.length === 0
-                    ? "[]"
-                    : JSON.stringify(value)
+  const formattedArgs = useMemo(() => {
+    if (!args) return null
+
+    return Object.entries(args).map(([key, value]) => (
+      <div key={key} className="mb-1">
+        <span className="text-muted-foreground font-medium">{key}:</span>{" "}
+        <span className="font-mono">
+          {typeof value === "object"
+            ? value === null
+              ? "null"
+              : Array.isArray(value)
+                ? value.length === 0
+                  ? "[]"
                   : JSON.stringify(value)
-              : String(value)}
-          </span>
-        </div>
-      ))
-    : null
+                : JSON.stringify(value)
+            : String(value)}
+        </span>
+      </div>
+    ))
+  }, [args])
+
+  // Type guard for search results
+  const isSearchResults = (data: unknown): data is SearchResult[] => {
+    return (
+      Array.isArray(data) &&
+      data.length > 0 &&
+      data.every(
+        (item) =>
+          typeof item === "object" &&
+          item !== null &&
+          "url" in item &&
+          "title" in item &&
+          typeof item.url === "string" &&
+          typeof item.title === "string"
+      )
+    )
+  }
+
+  // Type guard for weather data
+  const isWeatherData = (data: unknown): data is WeatherData => {
+    return (
+      typeof data === "object" &&
+      data !== null &&
+      "current" in data &&
+      typeof (data as any).current === "object"
+    )
+  }
 
   // Render generic results based on their structure
   const renderResults = () => {
     if (!parsedResult) return "No result data available"
 
-    // --- Penanganan Khusus untuk Tool 'getWeather' ---
-    if (toolName === 'getWeather' && parsedResult && typeof parsedResult === 'object' && 'current' in parsedResult) {
-      return <Weather weatherAtLocation={parsedResult as any} />; // Pastikan tipe data cocok
+    // Handle weather data
+    if (isWeatherData(parsedResult)) {
+      // You can uncomment and implement this when Weather component is available
+      // return <Weather weatherAtLocation={parsedResult} />
+      return (
+        <div className="font-mono text-xs">
+          <pre className="whitespace-pre-wrap">
+            {JSON.stringify(parsedResult, null, 2)}
+          </pre>
+        </div>
+      )
     }
 
-   /* // --- Penanganan Khusus untuk Tool 'search' ---
-    // Asumsi hasil pencarian adalah array objek dengan title, url, snippet
-    if (toolName === 'search' && Array.isArray(parsedResult) && parsedResult.length > 0 &&
-        parsedResult[0] && typeof parsedResult[0] === 'object' && 'url' in parsedResult[0] && 'title' in parsedResult[0]) {
-      return <SearchResults results={parsedResult as any[]} />; // Pastikan tipe data cocok
-    }*/
-
-
-    // Handle array of items with url, title, and snippet (like search results) - ini bisa dihapus jika SearchResults sudah menangani
-    if (Array.isArray(parsedResult) && parsedResult.length > 0) {
-      // Check if items look like search results
-      if (
-        parsedResult[0] &&
-        typeof parsedResult[0] === "object" &&
-        "url" in parsedResult[0] &&
-        "title" in parsedResult[0]
-      ) {
-        return (
-          <div className="space-y-3">
-            {parsedResult.map(
-              (
-                item: { url: string; title: string; snippet?: string },
-                index: number
-              ) => (
-                <div
-                  key={index}
-                  className="border-border border-b pb-3 last:border-0 last:pb-0"
-                >
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary group flex items-center gap-1 font-medium hover:underline"
-                  >
-                    {item.title}
-                    <Link className="h-3 w-3 opacity-70 transition-opacity group-hover:opacity-100" />
-                  </a>
-                  <div className="text-muted-foreground mt-1 font-mono text-xs">
-                    {item.url}
-                  </div>
-                  {item.snippet && (
-                    <div className="mt-1 line-clamp-2 text-sm">
-                      {item.snippet}
-                    </div>
-                  )}
+    // Handle search results
+    if (isSearchResults(parsedResult)) {
+      return (
+        <div className="space-y-3">
+          {parsedResult.map((item, index) => (
+            <div
+              key={`${item.url}-${index}`}
+              className="border-border border-b pb-3 last:border-0 last:pb-0"
+            >
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary group flex items-center gap-1 font-medium hover:underline"
+              >
+                {item.title}
+                <Link className="h-3 w-3 opacity-70 transition-opacity group-hover:opacity-100" />
+              </a>
+              <div className="text-muted-foreground mt-1 font-mono text-xs">
+                {item.url}
+              </div>
+              {item.snippet && (
+                <div className="mt-1 line-clamp-2 text-sm">
+                  {item.snippet}
                 </div>
-              )
-            )}
-          </div>
-        )
-      }
+              )}
+            </div>
+          ))}
+        </div>
+      )
+    }
 
-      // Generic array display
+    // Handle generic arrays
+    if (Array.isArray(parsedResult)) {
       return (
         <div className="font-mono text-xs">
           <pre className="whitespace-pre-wrap">
@@ -357,8 +391,8 @@ function SingleToolCard({
                 rel="noopener noreferrer"
                 className="text-primary flex items-center gap-1 hover:underline"
               >
-                <span className="font-mono">{htmlUrl}</span>
-                <Link className="h-3 w-3 opacity-70" />
+                <span className="font-mono text-xs break-all">{htmlUrl}</span>
+                <Link className="h-3 w-3 opacity-70 flex-shrink-0" />
               </a>
             </div>
           )}
@@ -373,11 +407,16 @@ function SingleToolCard({
 
     // Handle string results
     if (typeof parsedResult === "string") {
-      return <div className="whitespace-pre-wrap">{parsedResult}</div>
+      return <div className="whitespace-pre-wrap break-words">{parsedResult}</div>
     }
 
     // Fallback
     return "No result data available"
+  }
+
+  const handleToggleExpansion = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+    setIsExpanded(!isExpanded)
   }
 
   return (
@@ -388,12 +427,11 @@ function SingleToolCard({
       )}
     >
       <button
-        onClick={(e) => {
-          e.preventDefault()
-          setIsExpanded(!isExpanded)
-        }}
+        onClick={handleToggleExpansion}
         type="button"
         className="hover:bg-accent flex w-full flex-row items-center rounded-t-md px-3 py-2 transition-colors"
+        aria-expanded={isExpanded}
+        aria-label={`Toggle ${toolName} tool details`}
       >
         <div className="flex flex-1 flex-row items-center gap-2 text-left text-base">
           <Wrench className="text-muted-foreground size-4" />
@@ -466,7 +504,7 @@ function SingleToolCard({
                   </div>
                   <div className="bg-background max-h-60 overflow-auto rounded border p-2 text-sm">
                     {parseError ? (
-                      <div className="text-red-500">{parseError}</div>
+                      <div className="text-red-500 font-medium">{parseError}</div>
                     ) : (
                       renderResults()
                     )}
@@ -479,7 +517,7 @@ function SingleToolCard({
                 <div className="flex items-center">
                   <Code className="mr-1 inline size-3" />
                   Tool Call ID:{" "}
-                  <span className="ml-1 font-mono">{toolCallId}</span>
+                  <span className="ml-1 font-mono break-all">{toolCallId}</span>
                 </div>
               </div>
             </div>

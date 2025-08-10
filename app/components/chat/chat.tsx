@@ -29,6 +29,35 @@ const DialogAuth = dynamic(
   { ssr: false }
 )
 
+// Daftar greeting messages yang random
+const GREETING_MESSAGES = [
+  "What can I help you today?",
+  "How can I assist you today?",
+  "What's on your mind?",
+  "Ready to help! What do you need?",
+  "What would you like to explore today?",
+  "How can I make your day better?",
+  "What questions do you have for me?",
+  "Let's get started! What can I do for you?",
+  "What can we work on together?",
+  "How may I be of service today?",
+  "What brings you here today?",
+  "Ready when you are! What's up?",
+  "What challenge can I help solve?",
+  "How can I support you today?",
+  "What's your next move? I'm here to help!",
+  "Tell me, what's the plan today?",
+  "What adventure shall we embark on?",
+  "How can I brighten your day?",
+  "What creative ideas are brewing?",
+  "Ready to dive in? What's the task?",
+  "Apa yang bisa saya bantu hari ini?", // Indonesian version
+  "Ada yang ingin ditanyakan?",
+  "Siap membantu! Butuh apa?",
+  "Mau ngobrol tentang apa nih?",
+  "Yuk, mulai dari mana?",
+]
+
 export function Chat() {
   const { chatId } = useChatSession()
   const {
@@ -48,6 +77,12 @@ export function Chat() {
   const { user } = useUser()
   const { preferences } = useUserPreferences()
   const { draftValue, clearDraft } = useChatDraft(chatId)
+
+  // Random greeting message - akan sama selama component tidak di-unmount
+  const randomGreeting = useMemo(() => {
+    const randomIndex = Math.floor(Math.random() * GREETING_MESSAGES.length)
+    return GREETING_MESSAGES[randomIndex]
+  }, []) // Empty dependency agar hanya random sekali
 
   // File upload functionality
   const {
@@ -218,7 +253,7 @@ export function Chat() {
             }}
           >
             <h1 className="mb-6 text-3xl font-medium tracking-tight">
-              What can i help you today?
+              {randomGreeting}
             </h1>
           </motion.div>
         ) : (
