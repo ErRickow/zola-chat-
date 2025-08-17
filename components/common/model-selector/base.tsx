@@ -109,10 +109,10 @@ export function ModelSelector({
         }}
       >
         <div className="flex items-center gap-3">
-          {provider?.icon && <provider.icon className="size-5" />}
-          <div className="flex flex-col gap-0">
-            <span className="text-sm">{model.name}</span>
-          </div>
+          {/*{provider?.icon && <provider.icon className="size-5" />}
+          <div className="flex flex-col gap-0">*/}
+          <span className="text-sm">{model.name}</span>
+          {/*</div>*/}
         </div>
         {isLocked && (
           <div className="border-input bg-accent text-muted-foreground flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-medium">
