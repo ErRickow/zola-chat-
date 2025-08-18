@@ -100,7 +100,6 @@ export function useChatCore({
     reload,
     stop,
     setMessages,
-    setFiles: setChatFiles,
     setInput,
     append,
   } = useChat({
