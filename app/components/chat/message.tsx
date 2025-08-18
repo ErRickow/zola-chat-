@@ -48,7 +48,8 @@ export function Message({
     setTimeout(() => setCopied(false), 500)
   }
   
-  const imageAttachment = attachments?.find(att => att.contentType.startsWith("image/"))
+  // Tambahkan ? prevent undefined 
+  const imageAttachment = attachments?.find(att => att.contentType?.startsWith("image/"))
   if (imageAttachment) {
     return (
       <div className="group min-h-scroll-anchor flex w-full max-w-3xl flex-col items-start gap-2 px-6 pb-2">
