@@ -83,7 +83,7 @@ export function Chat() {
   const randomGreeting = useMemo(() => {
     const randomIndex = Math.floor(Math.random() * GREETING_MESSAGES.length)
     return GREETING_MESSAGES[randomIndex]
-  }, []) // Empty dependency agar hanya random sekali
+  }, [])
 
   // File upload functionality
   const {
@@ -105,7 +105,7 @@ export function Chat() {
   })
 
   // State untuk mode image generation
-  const [isImageGenerationMode, setIsImageGenerationMode] = useState(false);
+  const [isImageGenerationMode, setImageGenerationMode] = useState(false);
   
   const selectedModelConfig = getModelInfo(selectedModel);
   const hasImageGenerationSupport = Boolean(selectedModelConfig?.imageGeneration);
@@ -113,7 +113,7 @@ export function Chat() {
   // Jika model yang dipilih tidak mendukung image generation, matikan mode tersebut
   useEffect(() => {
     if (!hasImageGenerationSupport && isImageGenerationMode) {
-      setIsImageGenerationMode(false);
+      setImageGenerationMode(false);
     }
   }, [hasImageGenerationSupport, isImageGenerationMode]);
 
@@ -171,7 +171,7 @@ export function Chat() {
     bumpChat,
     // Teruskan state mode pembuatan gambar
     isImageGenerationMode,
-    setIsImageGenerationMode,
+    setImageGenerationMode,
   })
 
   // Memoize the conversation props to prevent unnecessary rerenders
@@ -207,7 +207,7 @@ export function Chat() {
       setEnableSearch,
       enableSearch,
       isImageGenerationMode,
-      setIsImageGenerationMode,
+      setImageGenerationMode,
     }),
     [
       input,
@@ -229,7 +229,7 @@ export function Chat() {
       setEnableSearch,
       enableSearch,
       isImageGenerationMode,
-      setIsImageGenerationMode,
+      setImageGenerationMode,
     ]
   )
 
