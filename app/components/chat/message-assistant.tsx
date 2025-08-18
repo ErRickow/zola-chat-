@@ -78,7 +78,8 @@ export function MessageAssistant({
       part.toolInvocation?.state === "result" &&
       part.toolInvocation?.toolName === "imageSearch" &&
       part.toolInvocation?.result?.content?.[0]?.type === "images" ?
-      (part.toolInvocation?.result?.content?.[0]?.results ?? []) : []
+      (part.toolInvocation?.result?.content?.[0]?.results ?? []) :
+      []
     ) ?? []
   
   return (
