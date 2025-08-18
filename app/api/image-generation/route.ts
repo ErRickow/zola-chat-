@@ -11,8 +11,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing prompt" }, { status: 400 })
     }
 
-    // Ambil API key dari database atau environment
-    // Anda perlu mengimplementasikan fungsi getNeosantaraApiKey
     const supabase = createSupabase()
     const apiKey = process.env.NEOSANTARA_API_KEY ?? ""
 
