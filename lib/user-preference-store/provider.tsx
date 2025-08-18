@@ -115,79 +115,89 @@ export function UserPreferencesProvider({
     return defaultPreferences
   }
 
-  const { data: preferences = getInitialData(), isLoading } =
-    useQuery<UserPreferences>({
-      queryKey: ["user-preferences", userId],
-      queryFn: async () => {
-        if (!isAuthenticated) {
-          return getLocalStoragePreferences()
-        }
+  // Gunakan useState untuk mengelola state lokal
+  const [preferences, setPreferences] = useState<UserPreferences>(() =>
+    getInitialData()
+  )
 
-        try {
-          return await fetchUserPreferences()
-        } catch (error) {
-          console.error(
-            "Failed to fetch user preferences, falling back to localStorage:",
-            error
-          )
-          return getLocalStoragePreferences()
-        }
-      },
-      enabled: typeof window !== "undefined",
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: (failureCount, error) => {
-        return isAuthenticated && failureCount < 2
-      },
-      initialData:
-        initialPreferences && isAuthenticated ? getInitialData() : undefined,
-    })
-
-  const mutation = useMutation({
-    mutationFn: async (update: Partial<UserPreferences>) => {
-      const updated = { ...preferences, ...update }
-
+  // Gunakan useQuery untuk sinkronisasi awal
+  const { isLoading } = useQuery<UserPreferences>({
+    queryKey: ["user-preferences", userId],
+    queryFn: async () => {
       if (!isAuthenticated) {
-        saveToLocalStorage(updated)
-        return updated
+        return getLocalStoragePreferences()
       }
 
       try {
-        return await updateUserPreferences(update)
+        const data = await fetchUserPreferences()
+        setPreferences(data) // Perbarui state lokal dengan data dari server
+        return data
       } catch (error) {
         console.error(
-          "Failed to update user preferences in database, falling back to localStorage:",
+          "Failed to fetch user preferences, falling back to localStorage:",
           error
         )
-        saveToLocalStorage(updated)
-        return updated
+        const localStorageData = getLocalStoragePreferences()
+        setPreferences(localStorageData)
+        return localStorageData
       }
     },
-    onMutate: async (update) => {
-      const queryKey = ["user-preferences", userId]
-      await queryClient.cancelQueries({ queryKey })
-
-      const previous = queryClient.getQueryData<UserPreferences>(queryKey)
-      const optimistic = { ...previous, ...update }
-      queryClient.setQueryData(queryKey, optimistic)
-
-      return { previous }
+    enabled: typeof window !== "undefined",
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: (failureCount) => {
+      return isAuthenticated && failureCount < 2
     },
-    onError: (_err, _update, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(["user-preferences", userId], context.previous)
+    initialData:
+      initialPreferences && isAuthenticated ? getInitialData() : undefined,
+  })
+
+  // Mutation untuk memperbarui preferensi
+  const mutation = useMutation({
+    mutationFn: updateUserPreferences,
+    onMutate: async (update) => {
+      const updated = { ...preferences, ...update }
+      setPreferences(updated) // Perbarui state lokal secara optimis
+      if (!isAuthenticated) {
+        saveToLocalStorage(updated)
       }
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["user-preferences", userId], data)
+      setPreferences(data) // Perbarui state lokal dengan data dari server
+    },
+    onError: (_err, _update) => {
+      // Tangani error, bisa dengan memutar kembali state lokal
+      const previous = queryClient.getQueryData<UserPreferences>([
+        "user-preferences",
+        userId,
+      ])
+      if (previous) {
+        setPreferences(previous)
+        if (!isAuthenticated) {
+          saveToLocalStorage(previous)
+        }
+      }
+      toast({
+        title: "Failed to update preferences",
+        status: "error",
+      })
     },
   })
 
-  const updatePreferences = mutation.mutate
+  const updatePreferences = (update: Partial<UserPreferences>) => {
+    if (isAuthenticated) {
+      mutation.mutate(update)
+    } else {
+      setPreferences((prev) => {
+        const updated = { ...prev, ...update }
+        saveToLocalStorage(updated)
+        return updated
+      })
+    }
+  }
 
   const setLayout = (layout: LayoutType) => {
-    if (isAuthenticated || layout === "fullscreen") {
-      updatePreferences({ layout })
-    }
+    updatePreferences({ layout })
   }
 
   const setPromptSuggestions = (enabled: boolean) => {
@@ -216,7 +226,6 @@ export function UserPreferencesProvider({
     const newHidden = isHidden
       ? currentHidden.filter((id) => id !== modelId)
       : [...currentHidden, modelId]
-
     updatePreferences({ hiddenModels: newHidden })
   }
 
