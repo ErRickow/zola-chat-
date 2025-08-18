@@ -107,7 +107,6 @@ export function useChatCore({
     initialInput: draftValue,
     body: {
       systemPrompt: preferences.systemPrompt,
-      enableSearch: preferences.enableSearch,
     },
     onFinish: cacheAndAddMessage,
     onError: handleError,
