@@ -84,7 +84,7 @@ export function ProjectView({ projectId }: ProjectViewProps) {
   }, [])
 
   // Tambahkan state untuk mode pembuatan gambar
-  const [isImageGenerationMode, setIsImageGenerationMode] = useState(false)
+  const [isImageGenerationMode, setImageGenerationMode] = useState(false)
   
   const { selectedModel, handleModelChange } = useModel({
     currentChat: null,
@@ -99,7 +99,7 @@ export function ProjectView({ projectId }: ProjectViewProps) {
   // Jika model yang dipilih tidak mendukung image generation, matikan mode tersebut
   useEffect(() => {
     if (!hasImageGenerationSupport && isImageGenerationMode) {
-      setIsImageGenerationMode(false);
+      setImageGenerationMode(false);
     }
   }, [hasImageGenerationSupport, isImageGenerationMode]);
 
