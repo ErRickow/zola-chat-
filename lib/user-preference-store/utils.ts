@@ -24,6 +24,7 @@ export const defaultPreferences: UserPreferences = {
 export function convertFromApiFormat(apiData: any): UserPreferences {
   return {
     layout: apiData.layout || "fullscreen",
+    systemPrompt: apiData.system_prompt ?? "",
     promptSuggestions: apiData.prompt_suggestions ?? true,
     showToolInvocations: apiData.show_tool_invocations ?? true,
     showConversationPreviews: apiData.show_conversation_previews ?? true,
