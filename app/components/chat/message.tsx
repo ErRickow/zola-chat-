@@ -16,12 +16,12 @@ type MessageProps = {
   parts?: MessageType["parts"]
   status?: "streaming" | "ready" | "submitted" | "error"
   className?: string
-  // Tambahkan properti baru untuk info pengirim
   senderInfo?: {
     id: string | null
     displayName: string | null
     profileImage: string | null
   } | null
+  onQuote?: (text: string, messageId: string) => void
 }
 
 export function Message({
@@ -37,7 +37,8 @@ export function Message({
   parts,
   status,
   className,
-  senderInfo, // Terima properti baru
+  senderInfo,
+  onQuote,
 }: MessageProps) {
   const [copied, setCopied] = useState(false)
 
@@ -77,6 +78,8 @@ export function Message({
         parts={parts}
         status={status}
         className={className}
+        messageId={id}
+        onQuote={onQuote}
       >
         {children}
       </MessageAssistant>

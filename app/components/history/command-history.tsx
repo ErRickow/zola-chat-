@@ -38,13 +38,13 @@ import { formatDate, groupChatsByDate } from "./utils"
 
 type CommandHistoryProps = {
   chatHistory: Chats[]
-  onSaveEdit: (id: string, newTitle: string) => Promise<void>
-  onConfirmDelete: (id: string) => Promise<void>
-  trigger: React.ReactNode
+  onSaveEdit: (id: string, newTitle: string) => Promise < void >
+    onConfirmDelete: (id: string) => Promise < void >
+    trigger: React.ReactNode
   isOpen: boolean
   setIsOpen: (open: boolean) => void
-  onOpenChange?: (open: boolean) => void
-  hasPopover?: boolean
+  onOpenChange ? : (open: boolean) => void
+  hasPopover ? : boolean
 }
 
 type CommandItemEditProps = {
@@ -208,7 +208,7 @@ function CommandItemRow({
 }: CommandItemRowProps) {
   const { chatId } = useChatSession()
   const isCurrentChat = chat.id === chatId
-
+  
   return (
     <>
       <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -267,11 +267,11 @@ function CommandItemRow({
   )
 }
 
-type CustomCommandDialogProps = React.ComponentProps<typeof Dialog> & {
-  title?: string
-  description?: string
-  className?: string
-  onOpenChange?: (open: boolean) => void
+type CustomCommandDialogProps = React.ComponentProps < typeof Dialog > & {
+  title ? : string
+  description ? : string
+  className ? : string
+  onOpenChange ? : (open: boolean) => void
 }
 
 // Custom CommandDialog with className support
@@ -315,17 +315,17 @@ export function CommandHistory({
   const router = useRouter()
   const { preferences } = useUserPreferences()
   const hasPrefetchedRef = useRef(false)
-
+  
   const [searchQuery, setSearchQuery] = useState("")
-  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState < string | null > (null)
   const [editTitle, setEditTitle] = useState("")
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
-  const [hoveredChatId, setHoveredChatId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState < string | null > (null)
+  const [selectedChatId, setSelectedChatId] = useState < string | null > (null)
+  const [hoveredChatId, setHoveredChatId] = useState < string | null > (null)
   const [isPreviewPanelHovered, setIsPreviewPanelHovered] = useState(false)
   const { messages, isLoading, error, fetchPreview, clearPreview } =
-    useChatPreview()
-
+  useChatPreview()
+  
   if (isOpen && !hasPrefetchedRef.current) {
     const recentChats = chatHistory.slice(0, 10)
     recentChats.forEach((chat) => {
@@ -333,11 +333,11 @@ export function CommandHistory({
     })
     hasPrefetchedRef.current = true
   }
-
+  
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open)
     onOpenChange?.(open)
-
+    
     if (!open) {
       setSearchQuery("")
       setEditingId(null)
@@ -350,18 +350,18 @@ export function CommandHistory({
       hasPrefetchedRef.current = false
     }
   }
-
+  
   useKeyShortcut(
     (e: KeyboardEvent) => e.key === "k" && (e.metaKey || e.ctrlKey),
     () => handleOpenChange(!isOpen)
   )
-
+  
   const handleChatHover = useCallback(
     (chatId: string | null) => {
       if (!preferences.showConversationPreviews) return
-
+      
       setHoveredChatId(chatId)
-
+      
       // Fetch preview when hovering over a chat
       if (chatId) {
         fetchPreview(chatId)
@@ -369,13 +369,13 @@ export function CommandHistory({
     },
     [preferences.showConversationPreviews, fetchPreview]
   )
-
+  
   const handlePreviewHover = useCallback(
     (isHovering: boolean) => {
       if (!preferences.showConversationPreviews) return
-
+      
       setIsPreviewPanelHovered(isHovering)
-
+      
       // Only clear the hovered chat if we're not hovering the preview panel
       // and there are already loaded messages
       if (!isHovering && !hoveredChatId) {
@@ -384,58 +384,64 @@ export function CommandHistory({
     },
     [preferences.showConversationPreviews, hoveredChatId]
   )
-
+  
   const handleEdit = useCallback((chat: Chats) => {
     setEditingId(chat.id)
     setEditTitle(chat.title || "")
   }, [])
-
+  
   const handleSaveEdit = useCallback(
     async (id: string) => {
-      setEditingId(null)
-      await onSaveEdit(id, editTitle)
-    },
-    [editTitle, onSaveEdit]
+        setEditingId(null)
+        await onSaveEdit(id, editTitle)
+      },
+      [editTitle, onSaveEdit]
   )
-
+  
   const handleCancelEdit = useCallback(() => {
     setEditingId(null)
     setEditTitle("")
   }, [])
-
+  
   const handleDelete = useCallback((id: string) => {
     setDeletingId(id)
   }, [])
-
+  
   const handleConfirmDelete = useCallback(
     async (id: string) => {
-      setDeletingId(null)
-      await onConfirmDelete(id)
-    },
-    [onConfirmDelete]
-  )
-
+        setDeletingId(null)
+        await onConfirmDelete(id)
+        // Clear preview and selection if the deleted chat was being previewed
+        if (hoveredChatId === id || selectedChatId === id) {
+          setHoveredChatId(null)
+          setSelectedChatId(null)
+          clearPreview()
+        }
+      },
+    [onConfirmDelete, hoveredChatId, selectedChatId, clearPreview]
+    )
+  
   const handleCancelDelete = useCallback(() => {
     setDeletingId(null)
   }, [])
-
+  
   const filteredChat = useMemo(() => {
     const query = searchQuery.toLowerCase()
-    return query
-      ? chatHistory.filter((chat) =>
-          (chat.title || "").toLowerCase().includes(query)
-        )
-      : chatHistory
+    return query ?
+      chatHistory.filter((chat) =>
+        (chat.title || "").toLowerCase().includes(query)
+      ) :
+      chatHistory
   }, [chatHistory, searchQuery])
-
+  
   const groupedChats = useMemo(
     () => groupChatsByDate(chatHistory, searchQuery),
     [chatHistory, searchQuery]
   )
-
+  
   const activePreviewChatId =
     hoveredChatId || (isPreviewPanelHovered ? hoveredChatId : null)
-
+  
   const renderChatItem = useCallback(
     (chat: Chats) => {
       const isCurrentChatSession = chat.id === chatId
@@ -443,7 +449,7 @@ export function CommandHistory({
         chat.id === editingId || chat.id === deletingId
       const isEditOrDeleteMode = editingId || deletingId
       const isSelected = chat.id === selectedChatId
-
+      
       return (
         <CommandItem
           key={chat.id}
@@ -483,45 +489,46 @@ export function CommandHistory({
               onSave={handleSaveEdit}
               onCancel={handleCancelEdit}
             />
-          ) : deletingId === chat.id ? (
-            <CommandItemDelete
+      ): deletingId === chat.id ? (
+        <CommandItemDelete
               chat={chat}
               onConfirm={handleConfirmDelete}
               onCancel={handleCancelDelete}
             />
-          ) : (
-            <CommandItemRow
+      ) : (
+        <CommandItemRow
               chat={chat}
               onEdit={handleEdit}
               onDelete={handleDelete}
               editingId={editingId}
               deletingId={deletingId}
             />
-          )}
-        </CommandItem>
       )
-    },
-    [
-      chatId,
-      router,
-      setIsOpen,
-      editingId,
-      deletingId,
-      editTitle,
-      selectedChatId,
-      preferences.showConversationPreviews,
-      handleSaveEdit,
-      handleCancelEdit,
-      handleConfirmDelete,
-      handleCancelDelete,
-      handleEdit,
-      handleDelete,
-      handleChatHover,
-    ]
+    }
+    </CommandItem>
   )
+},
+[
+  chatId,
+  router,
+  setIsOpen,
+  editingId,
+  deletingId,
+  editTitle,
+  selectedChatId,
+  preferences.showConversationPreviews,
+  handleSaveEdit,
+  handleCancelEdit,
+  handleConfirmDelete,
+  handleCancelDelete,
+  handleEdit,
+  handleDelete,
+  handleChatHover,
+]
+)
 
-  return (
-    <>
+return (
+  <>
       {hasPopover ? (
         <Tooltip>
           <TooltipTrigger asChild>{trigger}</TooltipTrigger>
@@ -595,5 +602,5 @@ export function CommandHistory({
         <CommandFooter />
       </CustomCommandDialog>
     </>
-  )
+)
 }

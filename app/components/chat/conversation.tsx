@@ -14,6 +14,7 @@ type ConversationProps = {
   onDelete: (id: string) => void
   onEdit: (id: string, newText: string) => void
   onReload: () => void
+  onQuote?: (text: string, messageId: string) => void
 }
 
 export function Conversation({
@@ -22,6 +23,7 @@ export function Conversation({
   onDelete,
   onEdit,
   onReload,
+  onQuote,
 }: ConversationProps) {
   const initialMessageCount = useRef(messages.length)
 
@@ -62,6 +64,7 @@ export function Conversation({
                 hasScrollAnchor={hasScrollAnchor}
                 parts={message.parts}
                 status={status}
+                onQuote={onQuote}
               >
                 {message.content}
               </Message>

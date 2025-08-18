@@ -14,19 +14,17 @@ import { cn } from "@/lib/utils"
 import { AnimatePresence, motion } from "motion/react"
 import dynamic from "next/dynamic"
 import { redirect } from "next/navigation"
-import { useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { useChatCore } from "./use-chat-core"
 import { useChatOperations } from "./use-chat-operations"
 import { useFileUpload } from "./use-file-upload"
 
 const FeedbackWidget = dynamic(
-  () => import("./feedback-widget").then((mod) => mod.FeedbackWidget),
-  { ssr: false }
+  () => import("./feedback-widget").then((mod) => mod.FeedbackWidget), { ssr: false }
 )
 
 const DialogAuth = dynamic(
-  () => import("./dialog-auth").then((mod) => mod.DialogAuth),
-  { ssr: false }
+  () => import("./dialog-auth").then((mod) => mod.DialogAuth), { ssr: false }
 )
 
 // Daftar greeting messages yang random
@@ -67,23 +65,23 @@ export function Chat() {
     bumpChat,
     isLoading: isChatsLoading,
   } = useChats()
-
+  
   const currentChat = useMemo(
     () => (chatId ? getChatById(chatId) : null),
     [chatId, getChatById]
   )
-
+  
   const { messages: initialMessages, cacheAndAddMessage } = useMessages()
   const { user } = useUser()
   const { preferences } = useUserPreferences()
   const { draftValue, clearDraft } = useChatDraft(chatId)
-
+  
   // Random greeting message - akan sama selama component tidak di-unmount
   const randomGreeting = useMemo(() => {
     const randomIndex = Math.floor(Math.random() * GREETING_MESSAGES.length)
     return GREETING_MESSAGES[randomIndex]
   }, []) // Empty dependency agar hanya random sekali
-
+  
   // File upload functionality
   const {
     files,
@@ -94,7 +92,7 @@ export function Chat() {
     handleFileUpload,
     handleFileRemove,
   } = useFileUpload()
-
+  
   // Model selection
   const { selectedModel, handleModelChange } = useModel({
     currentChat: currentChat || null,
@@ -102,7 +100,7 @@ export function Chat() {
     updateChatModel,
     chatId,
   })
-
+  
   // State to pass between hooks
   const [hasDialogAuth, setHasDialogAuth] = useState(false)
   const isAuthenticated = useMemo(() => !!user?.id, [user?.id])
@@ -110,21 +108,33 @@ export function Chat() {
     () => user?.system_prompt || SYSTEM_PROMPT_DEFAULT,
     [user?.system_prompt]
   )
-
+  
+  // New state for quoted text
+  const [quotedText, setQuotedText] = useState < {
+    text: string
+    messageId: string
+  } > ()
+  const handleQuotedSelected = useCallback(
+    (text: string, messageId: string) => {
+      setQuotedText({ text, messageId })
+    },
+    []
+  )
+  
   // Chat operations (utils + handlers) - created first
   const { checkLimitsAndNotify, ensureChatExists, handleDelete, handleEdit } =
-    useChatOperations({
-      isAuthenticated,
-      chatId,
-      messages: initialMessages,
-      selectedModel,
-      systemPrompt,
-      createNewChat,
-      setHasDialogAuth,
-      setMessages: () => {},
-      setInput: () => {},
-    })
-
+  useChatOperations({
+    isAuthenticated,
+    chatId,
+    messages: initialMessages,
+    selectedModel,
+    systemPrompt,
+    createNewChat,
+    setHasDialogAuth,
+    setMessages: () => {},
+    setInput: () => {},
+  })
+  
   // Core chat functionality (initialization + state + actions)
   const {
     messages,
@@ -156,7 +166,7 @@ export function Chat() {
     clearDraft,
     bumpChat,
   })
-
+  
   // Memoize the conversation props to prevent unnecessary rerenders
   const conversationProps = useMemo(
     () => ({
@@ -165,10 +175,11 @@ export function Chat() {
       onDelete: handleDelete,
       onEdit: handleEdit,
       onReload: handleReload,
+      onQuote: handleQuotedSelected,
     }),
-    [messages, status, handleDelete, handleEdit, handleReload]
+    [messages, status, handleDelete, handleEdit, handleReload, handleQuotedSelected]
   )
-
+  
   // Memoize the chat input props
   const chatInputProps = useMemo(
     () => ({
@@ -180,8 +191,7 @@ export function Chat() {
       files,
       onFileUpload: handleFileUpload,
       onFileRemove: handleFileRemove,
-      hasSuggestions:
-        preferences.promptSuggestions && !chatId && messages.length === 0,
+      hasSuggestions: preferences.promptSuggestions && !chatId && messages.length === 0,
       onSelectModel: handleModelChange,
       selectedModel,
       isUserAuthenticated: isAuthenticated,
@@ -189,6 +199,7 @@ export function Chat() {
       status,
       setEnableSearch,
       enableSearch,
+      quotedText,
     }),
     [
       input,
@@ -209,9 +220,10 @@ export function Chat() {
       status,
       setEnableSearch,
       enableSearch,
+      quotedText,
     ]
   )
-
+  
   // Handle redirect for invalid chatId - only redirect if we're certain the chat doesn't exist
   // and we're not in a transient state during chat creation
   if (
@@ -225,9 +237,9 @@ export function Chat() {
   ) {
     return redirect("/")
   }
-
+  
   const showOnboarding = !chatId && messages.length === 0
-
+  
   return (
     <div
       className={cn(

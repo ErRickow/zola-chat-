@@ -4,6 +4,9 @@ import {
   MessageActions,
   MessageContent,
 } from "@/components/prompt-kit/message"
+import { useCallback, useRef } from "react"
+import { QuoteButton } from "./quote-button"
+import { useAssistantMessageSelection } from "./useAssistantMessageSelection"
 import { useUserPreferences } from "@/lib/user-preference-store/provider"
 import { cn } from "@/lib/utils"
 import type { Message as MessageAISDK } from "@ai-sdk/react"
@@ -16,14 +19,16 @@ import { ToolInvocation } from "./tool-invocation"
 
 type MessageAssistantProps = {
   children: string
-  isLast?: boolean
-  hasScrollAnchor?: boolean
-  copied?: boolean
-  copyToClipboard?: () => void
-  onReload?: () => void
-  parts?: MessageAISDK["parts"]
-  status?: "streaming" | "ready" | "submitted" | "error"
-  className?: string
+  isLast ? : boolean
+  hasScrollAnchor ? : boolean
+  copied ? : boolean
+  copyToClipboard ? : () => void
+  onReload ? : () => void
+  parts ? : MessageAISDK["parts"]
+  status ? : "streaming" | "ready" | "submitted" | "error"
+  className ? : string
+  messageId: string
+  onQuote ? : (text: string, messageId: string) => void
 }
 
 export function MessageAssistant({
@@ -36,9 +41,23 @@ export function MessageAssistant({
   parts,
   status,
   className,
+  messageId,
+  onQuote,
 }: MessageAssistantProps) {
   const { preferences } = useUserPreferences()
   const sources = getSources(parts)
+  const isQuoteEnabled = !preferences.multiModelEnabled
+  const messageRef = useRef < HTMLDivElement > (null)
+  const { selectionInfo, clearSelection } = useAssistantMessageSelection(
+    messageRef,
+    isQuoteEnabled
+  )
+  const handleQuoteBtnClick = useCallback(() => {
+    if (selectionInfo && onQuote) {
+      onQuote(selectionInfo.text, selectionInfo.messageId)
+      clearSelection()
+    }
+  }, [selectionInfo, onQuote, clearSelection])
   const toolInvocationParts = parts?.filter(
     (part) => part.type === "tool-invocation"
   )
@@ -47,22 +66,21 @@ export function MessageAssistant({
   const isLastStreaming = status === "streaming" && isLast
   const searchImageResults =
     parts
-      ?.filter(
-        (part) =>
-          part.type === "tool-invocation" &&
-          part.toolInvocation?.state === "result" &&
-          part.toolInvocation?.toolName === "imageSearch" &&
-          part.toolInvocation?.result?.content?.[0]?.type === "images"
-      )
-      .flatMap((part) =>
-        part.type === "tool-invocation" &&
-        part.toolInvocation?.state === "result" &&
-        part.toolInvocation?.toolName === "imageSearch" &&
-        part.toolInvocation?.result?.content?.[0]?.type === "images"
-          ? (part.toolInvocation?.result?.content?.[0]?.results ?? [])
-          : []
-      ) ?? []
-
+    ?.filter(
+      (part) =>
+      part.type === "tool-invocation" &&
+      part.toolInvocation?.state === "result" &&
+      part.toolInvocation?.toolName === "imageSearch" &&
+      part.toolInvocation?.result?.content?.[0]?.type === "images"
+    )
+    .flatMap((part) =>
+      part.type === "tool-invocation" &&
+      part.toolInvocation?.state === "result" &&
+      part.toolInvocation?.toolName === "imageSearch" &&
+      part.toolInvocation?.result?.content?.[0]?.type === "images" ?
+      (part.toolInvocation?.result?.content?.[0]?.results ?? []) : []
+    ) ?? []
+  
   return (
     <Message
       className={cn(
@@ -71,7 +89,12 @@ export function MessageAssistant({
         className
       )}
     >
-      <div className={cn("flex min-w-full flex-col gap-2", isLast && "pb-8")}>
+      <div 
+      ref = { messageRef } className = {
+      cn("relative flex min-w-full flex-col gap-2", 
+      isLast && "pb-8")} 
+      { ...(isQuoteEnabled && { "data-message-id": messageId })
+      }>
         {reasoningParts && reasoningParts.reasoning && (
           <Reasoning
             reasoning={reasoningParts.reasoning}
@@ -144,6 +167,14 @@ export function MessageAssistant({
             ) : null}
           </MessageActions>
         )}
+          {isQuoteEnabled && selectionInfo && selectionInfo.messageId && (
+          <QuoteButton
+          mousePosition={selectionInfo.position}
+          onQuote={handleQuoteBtnClick}
+          messageContainerRef={messageRef}
+          onDismiss={clearSelection}
+          />
+          )}
       </div>
     </Message>
   )

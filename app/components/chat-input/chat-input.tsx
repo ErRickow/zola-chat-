@@ -16,7 +16,7 @@ import { useCodeBlockFullScreen } from "@/app/context/code-block-fullscreen-cont
 import { Button } from "@/components/ui/button"
 import { getModelInfo } from "@/lib/models"
 import { ArrowUpIcon, StopIcon } from "@phosphor-icons/react"
-import { useCallback, useMemo } from "react"
+import { useCallback, useEffect, useMemo, useRef } from "react"
 import { PromptSystem } from "../suggestions/prompt-system"
 import { ButtonFileUpload } from "./button-file-upload"
 import { ButtonSearch } from "./button-search"
@@ -28,20 +28,21 @@ type ChatInputProps = {
   value: string
   onValueChange: (value: string) => void
   onSend: () => void
-  isSubmitting?: boolean
-  hasMessages?: boolean
+  isSubmitting ? : boolean
+  hasMessages ? : boolean
   files: File[]
   onFileUpload: (files: File[]) => void
   onFileRemove: (file: File) => void
   onSuggestion: (suggestion: string) => void
-  hasSuggestions?: boolean
+  hasSuggestions ? : boolean
   onSelectModel: (model: string) => void
   selectedModel: string
   isUserAuthenticated: boolean
   stop: () => void
-  status?: "submitted" | "streaming" | "ready" | "error"
+  status ? : "submitted" | "streaming" | "ready" | "error"
   setEnableSearch: (enabled: boolean) => void
   enableSearch: boolean
+  quotedText ? : { text: string;messageId: string } | null
 }
 
 export function ChatInput({
@@ -61,9 +62,10 @@ export function ChatInput({
   status,
   setEnableSearch,
   enableSearch,
+  quotedText,
 }: ChatInputProps) {
   const { isFullScreenCodeBlockOpen } = useCodeBlockFullScreen(); // BARU: Gunakan hook konteks
-
+  
   // BARU: Jika modal full screen terbuka, jangan render ChatInput
   if (isFullScreenCodeBlockOpen) {
     return null;
@@ -71,90 +73,105 @@ export function ChatInput({
   const selectModelConfig = getModelInfo(selectedModel)
   const hasSearchSupport = Boolean(selectModelConfig?.webSearch)
   const isOnlyWhitespace = (text: string) => !/[^\s]/.test(text)
-
+  const textareaRef = useRef < HTMLTextAreaElement > (null)
+  
   const handleSend = useCallback(() => {
     if (isSubmitting) {
       return
     }
-
+    
     if (status === "streaming") {
       stop()
       return
     }
-
+    
     onSend()
   }, [isSubmitting, onSend, status, stop])
-
+  
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (isSubmitting) {
         e.preventDefault()
         return
       }
-
+      
       if (e.key === "Enter" && status === "streaming") {
         e.preventDefault()
         return
       }
-
+      
       if (e.key === "Enter" && !e.shiftKey) {
         if (isOnlyWhitespace(value)) {
           return
         }
-
+        
         e.preventDefault()
         onSend()
       }
     },
     [isSubmitting, onSend, status, value]
   )
-
+  
   const handlePaste = useCallback(
     async (e: React.ClipboardEvent) => {
-      const items = e.clipboardData?.items
-      if (!items) return
-
-      const hasImageContent = Array.from(items).some((item) =>
-        item.type.startsWith("image/")
-      )
-
-      if (!isUserAuthenticated && hasImageContent) {
-        e.preventDefault()
-        return
-      }
-
-      if (isUserAuthenticated && hasImageContent) {
-        const imageFiles: File[] = []
-
-        for (const item of Array.from(items)) {
-          if (item.type.startsWith("image/")) {
-            const file = item.getAsFile()
-            if (file) {
-              const newFile = new File(
-                [file],
-                `pasted-image-${Date.now()}.${file.type.split("/")[1]}`,
-                { type: file.type }
-              )
-              imageFiles.push(newFile)
+        const items = e.clipboardData?.items
+        if (!items) return
+        
+        const hasImageContent = Array.from(items).some((item) =>
+          item.type.startsWith("image/")
+        )
+        
+        if (!isUserAuthenticated && hasImageContent) {
+          e.preventDefault()
+          return
+        }
+        
+        if (isUserAuthenticated && hasImageContent) {
+          const imageFiles: File[] = []
+          
+          for (const item of Array.from(items)) {
+            if (item.type.startsWith("image/")) {
+              const file = item.getAsFile()
+              if (file) {
+                const newFile = new File(
+                  [file],
+                  `pasted-image-${Date.now()}.${file.type.split("/")[1]}`, { type: file.type }
+                )
+                imageFiles.push(newFile)
+              }
             }
           }
+          
+          if (imageFiles.length > 0) {
+            onFileUpload(imageFiles)
+          }
         }
-
-        if (imageFiles.length > 0) {
-          onFileUpload(imageFiles)
-        }
-      }
-      // Text pasting will work by default for everyone
-    },
-    [isUserAuthenticated, onFileUpload]
+        // Text pasting will work by default for everyone
+      },
+      [isUserAuthenticated, onFileUpload]
   )
-
+  
+  useEffect(() => {
+    if (quotedText) {
+      const quoted = quotedText.text
+        .split("\n")
+        .map((line) => `> ${line}`)
+        .join("\n")
+      onValueChange(value ? `${value}\n\n${quoted}\n\n` : `${quoted}\n\n`)
+      
+      requestAnimationFrame(() => {
+        textareaRef.current?.focus()
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quotedText, onValueChange])
+  
   useMemo(() => {
     if (!hasSearchSupport && enableSearch) {
       setEnableSearch?.(false)
     }
   }, [hasSearchSupport, enableSearch, setEnableSearch])
-
+  
   return (
     <div className="relative flex w-full flex-col gap-4">
       {hasSuggestions && (
@@ -173,6 +190,7 @@ export function ChatInput({
         >
           <FileList files={files} onFileRemove={onFileRemove} />
           <PromptInputTextarea
+            ref={textareaRef}
             placeholder="Ask Anything"
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
