@@ -16,6 +16,8 @@ import { PromptSystem } from "../suggestions/prompt-system"
 import { ButtonFileUpload } from "./button-file-upload"
 import { ButtonSearch } from "./button-search"
 import { FileList } from "./file-list"
+import { PromptTemplateSelector } from "@/components/common/prompt-template-selector"
+import { MagicWandIcon } from "@phosphor-icons/react"
 
 type ChatInputProps = {
   value: string
@@ -178,6 +180,18 @@ export function ChatInput({
                 isUserAuthenticated={isUserAuthenticated}
                 model={selectedModel}
               />
+            {/* Add this button */}
+              <PromptTemplateSelector>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="size-8"
+                  tooltip="Select Prompt Template"
+                >
+                  <MagicWandIcon className="size-5" />
+                </Button>
+              </PromptTemplateSelector>
               <ModelSelector
                 selectedModelId={selectedModel}
                 setSelectedModelId={onSelectModel}
