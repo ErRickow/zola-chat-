@@ -19,7 +19,9 @@ import { ChatCircleIcon } from "@phosphor-icons/react"
 import { useQuery } from "@tanstack/react-query"
 import { AnimatePresence, motion } from "motion/react"
 import { usePathname } from "next/navigation"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useMemo, useState, useEffect } from "react"
+import { getModelInfo } from "@/lib/models"
+import { useChatCore } from "../../components/chat/use-chat-core"
 
 type Project = {
   id: string
@@ -50,7 +52,6 @@ export function ProjectView({ projectId }: ProjectViewProps) {
     handleFileRemove,
   } = useFileUpload()
 
-  // Fetch project details
   const { data: project } = useQuery<Project>({
     queryKey: ["project", projectId],
     queryFn: async () => {
@@ -62,15 +63,12 @@ export function ProjectView({ projectId }: ProjectViewProps) {
     },
   })
 
-  // Get chats from the chat store and filter for this project
   const { chats: allChats } = useChats()
 
-  // Filter chats for this project
   const chats = allChats.filter((chat) => chat.project_id === projectId)
 
   const isAuthenticated = useMemo(() => !!user?.id, [user?.id])
 
-  // Handle errors directly in onError callback
   const handleError = useCallback((error: Error) => {
     let errorMsg = "Something went wrong."
     try {
@@ -85,6 +83,26 @@ export function ProjectView({ projectId }: ProjectViewProps) {
     })
   }, [])
 
+  // Tambahkan state untuk mode pembuatan gambar
+  const [isImageGenerationMode, setIsImageGenerationMode] = useState(false)
+  
+  const { selectedModel, handleModelChange } = useModel({
+    currentChat: null,
+    user,
+    updateChatModel: () => Promise.resolve(),
+    chatId: null,
+  })
+
+  const selectedModelConfig = getModelInfo(selectedModel);
+  const hasImageGenerationSupport = Boolean(selectedModelConfig?.imageGeneration);
+
+  // Jika model yang dipilih tidak mendukung image generation, matikan mode tersebut
+  useEffect(() => {
+    if (!hasImageGenerationSupport && isImageGenerationMode) {
+      setIsImageGenerationMode(false);
+    }
+  }, [hasImageGenerationSupport, isImageGenerationMode]);
+
   const {
     messages,
     input,
@@ -98,33 +116,41 @@ export function ProjectView({ projectId }: ProjectViewProps) {
     id: `project-${projectId}-${currentChatId}`,
     api: API_ROUTE_CHAT,
     initialMessages: [],
+    // Tambahkan properti body untuk image generation
+    body: {
+      systemPrompt: SYSTEM_PROMPT_DEFAULT,
+      enableSearch,
+      isImageGenerationMode
+    },
     onFinish: cacheAndAddMessage,
     onError: handleError,
   })
 
-  const { selectedModel, handleModelChange } = useModel({
-    currentChat: null,
-    user,
-    updateChatModel: () => Promise.resolve(),
+  const { handleDelete, handleEdit } = useChatOperations({
+    isAuthenticated: true,
     chatId: null,
+    messages,
+    selectedModel,
+    systemPrompt: SYSTEM_PROMPT_DEFAULT,
+    createNewChat,
+    setHasDialogAuth: () => {},
+    setMessages,
+    setInput,
   })
 
-  // Simplified ensureChatExists for authenticated project context
   const ensureChatExists = useCallback(
     async (userId: string) => {
-      // If we already have a current chat ID, return it
       if (currentChatId) {
         return currentChatId
       }
 
-      // Only create a new chat if we haven't started one yet
       if (messages.length === 0) {
         try {
           const newChat = await createNewChat(
             userId,
             input,
             selectedModel,
-            true, // Always authenticated in this context
+            true,
             SYSTEM_PROMPT_DEFAULT,
             projectId
           )
@@ -132,7 +158,6 @@ export function ProjectView({ projectId }: ProjectViewProps) {
           if (!newChat) return null
 
           setCurrentChatId(newChat.id)
-          // Redirect to the chat page as expected
           window.history.pushState(null, "", `/c/${newChat.id}`)
           return newChat.id
         } catch (err: unknown) {
@@ -167,19 +192,6 @@ export function ProjectView({ projectId }: ProjectViewProps) {
     ]
   )
 
-  const { handleDelete, handleEdit } = useChatOperations({
-    isAuthenticated: true, // Always authenticated in project context
-    chatId: null,
-    messages,
-    selectedModel,
-    systemPrompt: SYSTEM_PROMPT_DEFAULT,
-    createNewChat,
-    setHasDialogAuth: () => {}, // Not used in project context
-    setMessages,
-    setInput,
-  })
-
-  // Simple input change handler for project context (no draft saving needed)
   const handleInputChange = useCallback(
     (value: string) => {
       setInput(value)
@@ -252,6 +264,7 @@ export function ProjectView({ projectId }: ProjectViewProps) {
           isAuthenticated: true,
           systemPrompt: SYSTEM_PROMPT_DEFAULT,
           enableSearch,
+          isImageGenerationMode, // Tambahkan properti ini
         },
         experimental_attachments: attachments || undefined,
       }
@@ -261,7 +274,6 @@ export function ProjectView({ projectId }: ProjectViewProps) {
       cleanupOptimisticAttachments(optimisticMessage.experimental_attachments)
       cacheAndAddMessage(optimisticMessage)
 
-      // Bump existing chats to top (non-blocking, after submit)
       if (messages.length > 0) {
         bumpChat(currentChatId)
       }
@@ -289,6 +301,7 @@ export function ProjectView({ projectId }: ProjectViewProps) {
     messages.length,
     bumpChat,
     enableSearch,
+    isImageGenerationMode,
   ])
 
   const handleReload = useCallback(async () => {
@@ -317,7 +330,6 @@ export function ProjectView({ projectId }: ProjectViewProps) {
     })
   }
 
-  // Memoize the conversation props to prevent unnecessary rerenders
   const conversationProps = useMemo(
     () => ({
       messages,
@@ -329,7 +341,6 @@ export function ProjectView({ projectId }: ProjectViewProps) {
     [messages, status, handleDelete, handleEdit, handleReload]
   )
 
-  // Memoize the chat input props
   const chatInputProps = useMemo(
     () => ({
       value: input,
@@ -348,6 +359,8 @@ export function ProjectView({ projectId }: ProjectViewProps) {
       status,
       setEnableSearch,
       enableSearch,
+      isImageGenerationMode, // Tambahkan properti ini
+      setImageGenerationMode, // Tambahkan properti ini
     }),
     [
       input,
@@ -364,10 +377,11 @@ export function ProjectView({ projectId }: ProjectViewProps) {
       status,
       setEnableSearch,
       enableSearch,
+      isImageGenerationMode,
+      setImageGenerationMode,
     ]
   )
 
-  // Always show onboarding when on project page, regardless of messages
   const showOnboarding = pathname === `/p/${projectId}`
 
   return (
@@ -377,8 +391,8 @@ export function ProjectView({ projectId }: ProjectViewProps) {
         showOnboarding && chats.length === 0
           ? "justify-center pt-0"
           : showOnboarding && chats.length > 0
-            ? "justify-start pt-32"
-            : "justify-end"
+          ? "justify-start pt-32"
+          : "justify-end"
       )}
     >
       <AnimatePresence initial={false} mode="popLayout">
