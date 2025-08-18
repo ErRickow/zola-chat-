@@ -2,6 +2,7 @@ export type LayoutType = "sidebar" | "fullscreen"
 
 export type UserPreferences = {
   layout: LayoutType
+  systemPrompt: string
   promptSuggestions: boolean
   showToolInvocations: boolean
   showConversationPreviews: boolean
@@ -11,6 +12,7 @@ export type UserPreferences = {
 
 export const defaultPreferences: UserPreferences = {
   layout: "fullscreen",
+  systemPrompt: "",
   promptSuggestions: true,
   showToolInvocations: true,
   showConversationPreviews: true,
