@@ -11,13 +11,14 @@ import { SYSTEM_PROMPT_DEFAULT } from "@/lib/config"
 import { useUserPreferences } from "@/lib/user-preference-store/provider"
 import { useUser } from "@/lib/user-store/provider"
 import { cn } from "@/lib/utils"
-import { AnimatePresence, motion } from "motion/react"
+import { AnimatePresence, motion } from "framer-motion"
 import dynamic from "next/dynamic"
 import { redirect } from "next/navigation"
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react" // Tambahkan useEffect
 import { useChatCore } from "./use-chat-core"
 import { useChatOperations } from "./use-chat-operations"
 import { useFileUpload } from "./use-file-upload"
+import { getModelInfo } from "@/lib/models" // Tambahkan impor getModelInfo
 
 const FeedbackWidget = dynamic(
   () => import("./feedback-widget").then((mod) => mod.FeedbackWidget),
@@ -103,6 +104,19 @@ export function Chat() {
     chatId,
   })
 
+  // State untuk mode image generation
+  const [isImageGenerationMode, setIsImageGenerationMode] = useState(false);
+  
+  const selectedModelConfig = getModelInfo(selectedModel);
+  const hasImageGenerationSupport = Boolean(selectedModelConfig?.imageGeneration);
+
+  // Jika model yang dipilih tidak mendukung image generation, matikan mode tersebut
+  useEffect(() => {
+    if (!hasImageGenerationSupport && isImageGenerationMode) {
+      setIsImageGenerationMode(false);
+    }
+  }, [hasImageGenerationSupport, isImageGenerationMode]);
+
   // State to pass between hooks
   const [hasDialogAuth, setHasDialogAuth] = useState(false)
   const isAuthenticated = useMemo(() => !!user?.id, [user?.id])
@@ -155,6 +169,9 @@ export function Chat() {
     selectedModel,
     clearDraft,
     bumpChat,
+    // Teruskan state mode pembuatan gambar
+    isImageGenerationMode,
+    setImageGenerationMode,
   })
 
   // Memoize the conversation props to prevent unnecessary rerenders
@@ -189,6 +206,8 @@ export function Chat() {
       status,
       setEnableSearch,
       enableSearch,
+      isImageGenerationMode,
+      setImageGenerationMode,
     }),
     [
       input,
@@ -209,6 +228,8 @@ export function Chat() {
       status,
       setEnableSearch,
       enableSearch,
+      isImageGenerationMode,
+      setImageGenerationMode,
     ]
   )
 
