@@ -64,7 +64,8 @@ export function MessageAssistant({
   const reasoningParts = parts?.find((part) => part.type === "reasoning")
   const contentNullOrEmpty = children === null || children === ""
   const isLastStreaming = status === "streaming" && isLast
-  const searchImageResults = parts
+  const searchImageResults =
+    parts
     ?.filter(
       (part) =>
       part.type === "tool-invocation" &&
@@ -72,8 +73,14 @@ export function MessageAssistant({
       part.toolInvocation?.toolName === "imageSearchTool" &&
       part.toolInvocation?.result?.content?.[0]?.type === "images"
     )
-    .flatMap((part) => part.toolInvocation?.result?.content?.[0]?.results ?? []) ??
-    [];
+    .flatMap((part) =>
+      part.type === "tool-invocation" &&
+      part.toolInvocation?.state === "result" &&
+      part.toolInvocation?.toolName === "imageSearch" &&
+      part.toolInvocation?.result?.content?.[0]?.type === "images" ?
+      (part.toolInvocation?.result?.content?.[0]?.results ?? []) :
+      []
+    ) ?? []
   
   return (
     <Message
