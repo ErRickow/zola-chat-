@@ -12,7 +12,6 @@ import {
 } from "./api"
 import { createErrorResponse, extractErrorMessage } from "./utils"
 import { getWeather, search, getWebContent } from "@/lib/tools"
-import { useUserPreferences } from "@/lib/user-preference-store/provider"
 
 export const maxDuration = 60
 
@@ -24,7 +23,8 @@ type ChatRequest = {
   isAuthenticated: boolean
   systemPrompt: string
   enableSearch: boolean
-  message_group_id ? : string
+  showToolInvocations: boolean
+  message_group_id?: string
 }
 
 export async function POST(req: Request) {
@@ -37,29 +37,30 @@ export async function POST(req: Request) {
       isAuthenticated,
       systemPrompt,
       enableSearch,
+      showToolInvocations,
       message_group_id,
     } = (await req.json()) as ChatRequest
-    const preference = useUserPreferences();
-    
+
     if (!messages || !chatId || !userId) {
       return new Response(
-        JSON.stringify({ error: "Error, missing information" }), { status: 400 }
+        JSON.stringify({ error: "Error, missing information" }),
+        { status: 400 }
       )
     }
-    
+
     const supabase = await validateAndTrackUsage({
       userId,
       model,
       isAuthenticated,
     })
-    
+
     // Increment message count for successful validation
     if (supabase) {
       await incrementMessageCount({ supabase, userId })
     }
-    
+
     const userMessage = messages[messages.length - 1]
-    
+
     if (supabase && userMessage?.role === "user") {
       await logUserMessage({
         supabase,
@@ -72,24 +73,16 @@ export async function POST(req: Request) {
         message_group_id,
       })
     }
-    
+
     const allModels = await getAllModels()
     const modelConfig = allModels.find((m) => m.id === model)
-    
+
     if (!modelConfig || !modelConfig.apiSdk) {
       throw new Error(`Model ${model} not found`)
     }
-    
+
     const effectiveSystemPrompt = systemPrompt || SYSTEM_PROMPT_DEFAULT
-    const useTools = preference.showToolInvocations ?
-    {
-      tools: {
-        getWeather,
-        search,
-        getWebContent,
-      },
-    } : {};
-    
+
     let apiKey: string | undefined
     if (isAuthenticated && userId) {
       const { getEffectiveApiKey } = await import("@/lib/user-keys")
@@ -99,30 +92,40 @@ export async function POST(req: Request) {
         undefined
     }
     
+    // Objek tools dibuat secara kondisional berdasarkan nilai showToolInvocations
+    const tools = showToolInvocations
+      ? {
+          getWeather,
+          search,
+          getWebContent,
+        }
+      : {};
+
     const result = streamText({
       model: modelConfig.apiSdk(apiKey, { enableSearch }),
       system: effectiveSystemPrompt,
       messages: messages,
+      tools: tools as ToolSet,
       maxSteps: 10,
-      tools: useTools.tools,
       onError: (err: unknown) => {
         console.error("Streaming error occurred:", err)
         // Don't set streamError anymore - let the AI SDK handle it through the stream
       },
-      
+
       onFinish: async ({ response }) => {
         if (supabase) {
           await storeAssistantMessage({
             supabase,
             chatId,
-            messages: response.messages as unknown as import("@/app/types/api.types").Message[],
+            messages:
+              response.messages as unknown as import("@/app/types/api.types").Message[],
             message_group_id,
             model,
           })
         }
       },
     })
-    
+
     return result.toDataStreamResponse({
       sendReasoning: true,
       sendSources: true,
@@ -134,11 +137,11 @@ export async function POST(req: Request) {
   } catch (err: unknown) {
     console.error("Error in /api/chat:", err)
     const error = err as {
-      code ? : string
-      message ? : string
-      statusCode ? : number
+      code?: string
+      message?: string
+      statusCode?: number
     }
-    
+
     return createErrorResponse(error)
   }
 }
