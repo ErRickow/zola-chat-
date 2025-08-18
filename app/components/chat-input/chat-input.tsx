@@ -1,5 +1,6 @@
 "use client"
 
+import { useUserPreferences } from "@/lib/user-preference-store/provider"
 import { ModelSelector } from "@/components/common/model-selector/base"
 import {
   PromptInput,
@@ -7,22 +8,20 @@ import {
   PromptInputActions,
   PromptInputTextarea,
 } from "@/components/prompt-kit/prompt-input"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import { useCodeBlockFullScreen } from "@/app/context/code-block-fullscreen-context";
 import { Button } from "@/components/ui/button"
 import { getModelInfo } from "@/lib/models"
 import { ArrowUpIcon, StopIcon } from "@phosphor-icons/react"
-import { useCallback, useMemo } from "react"
+import { useCallback, useMemo, useRef, useState } from "react"
 import { PromptSystem } from "../suggestions/prompt-system"
 import { ButtonFileUpload } from "./button-file-upload"
 import { ButtonSearch } from "./button-search"
 import { FileList } from "./file-list"
 import { PromptTemplateSelector } from "@/components/common/prompt-template-selector"
-import { MagicWandIcon } from "@phosphor-icons/react"
+import { MagicWandIcon, ImageIcon } from "@phosphor-icons/react"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { cn } from "@/lib/utils";
 
 type ChatInputProps = {
   value: string
@@ -42,6 +41,8 @@ type ChatInputProps = {
   status?: "submitted" | "streaming" | "ready" | "error"
   setEnableSearch: (enabled: boolean) => void
   enableSearch: boolean
+  isImageGenerationMode: boolean
+  setImageGenerationMode: (enabled: boolean) => void
 }
 
 export function ChatInput({
@@ -61,15 +62,17 @@ export function ChatInput({
   status,
   setEnableSearch,
   enableSearch,
+  isImageGenerationMode,
+  setImageGenerationMode,
 }: ChatInputProps) {
-  const { isFullScreenCodeBlockOpen } = useCodeBlockFullScreen(); // BARU: Gunakan hook konteks
-
-  // BARU: Jika modal full screen terbuka, jangan render ChatInput
+  const { isFullScreenCodeBlockOpen } = useCodeBlockFullScreen();
   if (isFullScreenCodeBlockOpen) {
     return null;
   }
+  
   const selectModelConfig = getModelInfo(selectedModel)
   const hasSearchSupport = Boolean(selectModelConfig?.webSearch)
+  const hasImageGenerationSupport = Boolean(selectModelConfig?.imageGeneration)
   const isOnlyWhitespace = (text: string) => !/[^\s]/.test(text)
 
   const handleSend = useCallback(() => {
@@ -185,22 +188,35 @@ export function ChatInput({
                 isUserAuthenticated={isUserAuthenticated}
                 model={selectedModel}
               />
-              { /* Corrected code starts here */ }
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <PromptTemplateSelector>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="size-8"
-                    >
-                      <MagicWandIcon className="size-5" />
-                    </Button>
-                  </PromptTemplateSelector>
-                </TooltipTrigger>
-                <TooltipContent>Select Prompt Template</TooltipContent>
-              </Tooltip>
+              {/*<PromptTemplateSelector>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="size-8"
+                  tooltip="Select Prompt Template"
+                >
+                  <MagicWandIcon className="size-5" />
+                </Button>
+              </PromptTemplateSelector>*/}
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="image-mode"
+                  checked={isImageGenerationMode}
+                  onCheckedChange={setImageGenerationMode}
+                  disabled={!hasImageGenerationSupport}
+                />
+                <Label
+                  htmlFor="image-mode"
+                  className={cn(
+                    "flex items-center gap-1",
+                    !hasImageGenerationSupport && "cursor-not-allowed opacity-50"
+                  )}
+                >
+                  <ImageIcon className="size-4" />
+                  <span>Image</span>
+                </Label>
+              </div>
               <ModelSelector
                 selectedModelId={selectedModel}
                 setSelectedModelId={onSelectModel}

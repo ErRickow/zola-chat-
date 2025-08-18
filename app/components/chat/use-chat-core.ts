@@ -12,6 +12,7 @@ import type { Message } from "@ai-sdk/react"
 import { useChat } from "@ai-sdk/react"
 import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { nanoid } from "nanoid" // Import nanoid
 
 type UseChatCoreProps = {
   initialMessages: Message[]
@@ -34,6 +35,8 @@ type UseChatCoreProps = {
   selectedModel: string
   clearDraft: () => void
   bumpChat: (chatId: string) => void
+  isImageGenerationMode: boolean
+  setImageGenerationMode: (enabled: boolean) => void
 }
 
 export function useChatCore({
@@ -52,16 +55,15 @@ export function useChatCore({
   selectedModel,
   clearDraft,
   bumpChat,
+  isImageGenerationMode,
+  setImageGenerationMode,
 }: UseChatCoreProps) {
-  // State management
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [hasDialogAuth, setHasDialogAuth] = useState(false)
   const [enableSearch, setEnableSearch] = useState(false)
-
-  // Mengambil user preferences dari hook
+  
   const { preferences } = useUserPreferences()
 
-  // Refs and derived state
   const hasSentFirstMessageRef = useRef(false)
   const prevChatIdRef = useRef<string | null>(chatId)
   const isAuthenticated = useMemo(() => !!user?.id, [user?.id])
@@ -70,11 +72,9 @@ export function useChatCore({
     [user?.system_prompt]
   )
 
-  // Search params handling
   const searchParams = useSearchParams()
   const prompt = searchParams.get("prompt")
 
-  // Handle errors directly in onError callback
   const handleError = useCallback((error: Error) => {
     console.error("Chat error:", error)
     console.error("Error message:", error.message)
@@ -90,7 +90,6 @@ export function useChatCore({
     })
   }, [])
 
-  // Inisialisasi useChat
   const {
     messages,
     input,
@@ -106,24 +105,20 @@ export function useChatCore({
     api: API_ROUTE_CHAT,
     initialMessages,
     initialInput: draftValue,
-    // Pindahkan properti body ke sini
     body: {
       systemPrompt: preferences.systemPrompt,
-    //  enableSearch: preferences.enableSearch,
-      // Tambahkan properti lain yang dibutuhkan di sini
+      enableSearch: preferences.enableSearch,
     },
     onFinish: cacheAndAddMessage,
     onError: handleError,
   })
 
-  // Handle search params on mount
   useEffect(() => {
     if (prompt && typeof window !== "undefined") {
       requestAnimationFrame(() => setInput(prompt))
     }
   }, [prompt, setInput])
 
-  // Reset messages when navigating from a chat to home
   if (
     prevChatIdRef.current !== null &&
     chatId === null &&
@@ -133,109 +128,157 @@ export function useChatCore({
   }
   prevChatIdRef.current = chatId
 
-  // Submit action
   const submit = useCallback(async () => {
-    setIsSubmitting(true)
+    // Tambahkan logika kondisional di sini
+    if (isImageGenerationMode) {
+      setIsSubmitting(true)
+      const optimisticId = `optimistic-${Date.now().toString()}`
 
-    const uid = await getOrCreateGuestUserId(user)
-    if (!uid) {
-      setIsSubmitting(false)
-      return
-    }
-
-    const optimisticId = `optimistic-${Date.now().toString()}`
-    const optimisticAttachments =
-      files.length > 0 ? createOptimisticAttachments(files) : []
-
-    const optimisticMessage = {
-      id: optimisticId,
-      content: input,
-      role: "user" as const,
-      createdAt: new Date(),
-      experimental_attachments:
-        optimisticAttachments.length > 0 ? optimisticAttachments : undefined,
-    }
-
-    setMessages((prev) => [...prev, optimisticMessage])
-    setInput("")
-
-    const submittedFiles = [...files]
-    setFiles([])
-
-    try {
-      const allowed = await checkLimitsAndNotify(uid)
-      if (!allowed) {
-        setMessages((prev) => prev.filter((m) => m.id !== optimisticId))
-        cleanupOptimisticAttachments(optimisticMessage.experimental_attachments)
-        return
+      const userMessage = {
+        id: optimisticId,
+        content: input,
+        role: "user" as const,
+        createdAt: new Date(),
       }
 
-      const currentChatId = await ensureChatExists(uid, input)
-      if (!currentChatId) {
-        setMessages((prev) => prev.filter((msg) => msg.id !== optimisticId))
-        cleanupOptimisticAttachments(optimisticMessage.experimental_attachments)
-        return
-      }
+      setMessages((prev) => [...prev, userMessage])
+      setInput("")
 
-      if (input.length > MESSAGE_MAX_LENGTH) {
-        toast({
-          title: `The message you submitted was too long, please submit something shorter. (Max ${MESSAGE_MAX_LENGTH} characters)`,
-          status: "error",
+      try {
+        const res = await fetch("/api/image-generation", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ prompt: userMessage.content, userId: user?.id }),
         })
+
+        if (!res.ok) {
+          throw new Error("Failed to generate image")
+        }
+
+        const data = await res.json()
+
+        const assistantMessage = {
+          id: nanoid(),
+          content: "",
+          role: "assistant" as const,
+          createdAt: new Date(),
+          experimental_attachments: [{ url: data.imageUrl, contentType: "image/jpeg", name: "generated-image.jpg" }],
+        }
+
+        setMessages((prev) => [...prev, assistantMessage])
+      } catch (err) {
+        toast({ title: "Failed to generate image", status: "error" })
         setMessages((prev) => prev.filter((msg) => msg.id !== optimisticId))
-        cleanupOptimisticAttachments(optimisticMessage.experimental_attachments)
+      } finally {
+        setIsSubmitting(false)
+      }
+    } else {
+      // Logika default untuk chat
+      setIsSubmitting(true)
+      const uid = await getOrCreateGuestUserId(user)
+      if (!uid) {
+        setIsSubmitting(false)
         return
       }
 
-      let attachments: Attachment[] | null = []
-      if (submittedFiles.length > 0) {
-        attachments = await handleFileUploads(uid, currentChatId)
-        if (attachments === null) {
+      const optimisticId = `optimistic-${Date.now().toString()}`
+      const optimisticAttachments =
+        files.length > 0 ? createOptimisticAttachments(files) : []
+
+      const optimisticMessage = {
+        id: optimisticId,
+        content: input,
+        role: "user" as const,
+        createdAt: new Date(),
+        experimental_attachments:
+          optimisticAttachments.length > 0 ? optimisticAttachments : undefined,
+      }
+
+      setMessages((prev) => [...prev, optimisticMessage])
+      setInput("")
+
+      const submittedFiles = [...files]
+      setFiles([])
+
+      try {
+        const allowed = await checkLimitsAndNotify(uid)
+        if (!allowed) {
           setMessages((prev) => prev.filter((m) => m.id !== optimisticId))
-          cleanupOptimisticAttachments(
-            optimisticMessage.experimental_attachments
-          )
+          cleanupOptimisticAttachments(optimisticMessage.experimental_attachments)
           return
         }
-      }
 
-      const options = {
-        body: {
-          chatId: currentChatId,
-          userId: uid,
-          model: selectedModel,
-          isAuthenticated,
-          // Hapus `systemPrompt` dari sini
-          // systemPrompt: preferences.systemPrompt,
-          // Hapus `enableSearch` dari sini
-          // enableSearch: preferences.enableSearch,
-        },
-        experimental_attachments: attachments || undefined,
-      }
+        const currentChatId = await ensureChatExists(uid, input)
+        if (!currentChatId) {
+          setMessages((prev) => prev.filter((msg) => msg.id !== optimisticId))
+          cleanupOptimisticAttachments(optimisticMessage.experimental_attachments)
+          return
+        }
 
-      handleSubmit(undefined, options)
-      setMessages((prev) => prev.filter((msg) => msg.id !== optimisticId))
-      cleanupOptimisticAttachments(optimisticMessage.experimental_attachments)
-      cacheAndAddMessage(optimisticMessage)
-      clearDraft()
+        if (input.length > MESSAGE_MAX_LENGTH) {
+          toast({
+            title: `The message you submitted was too long, please submit something shorter. (Max ${MESSAGE_MAX_LENGTH} characters)`,
+            status: "error",
+          })
+          setMessages((prev) => prev.filter((msg) => msg.id !== optimisticId))
+          cleanupOptimisticAttachments(optimisticMessage.experimental_attachments)
+          return
+        }
 
-      if (messages.length > 0) {
-        bumpChat(currentChatId)
+        let attachments: Attachment[] | null = []
+        if (submittedFiles.length > 0) {
+          attachments = await handleFileUploads(uid, currentChatId)
+          if (attachments === null) {
+            setMessages((prev) => prev.filter((m) => m.id !== optimisticId))
+            cleanupOptimisticAttachments(
+              optimisticMessage.experimental_attachments
+            )
+            return
+          }
+        }
+
+        const options = {
+          body: {
+            chatId: currentChatId,
+            userId: uid,
+            model: selectedModel,
+            isAuthenticated,
+            systemPrompt: preferences.systemPrompt,
+            enableSearch,
+          },
+          experimental_attachments: attachments || undefined,
+        }
+
+        handleSubmit(undefined, options)
+        setMessages((prev) => prev.filter((msg) => msg.id !== optimisticId))
+        cleanupOptimisticAttachments(optimisticMessage.experimental_attachments)
+        cacheAndAddMessage(optimisticMessage)
+        clearDraft()
+
+        if (messages.length > 0) {
+          bumpChat(currentChatId)
+        }
+      } catch {
+        setMessages((prev) => prev.filter((msg) => msg.id !== optimisticId))
+        cleanupOptimisticAttachments(optimisticMessage.experimental_attachments)
+        toast({ title: "Failed to send message", status: "error" })
+      } finally {
+        setIsSubmitting(false)
       }
-    } catch {
-      setMessages((prev) => prev.filter((msg) => msg.id !== optimisticId))
-      cleanupOptimisticAttachments(optimisticMessage.experimental_attachments)
-      toast({ title: "Failed to send message", status: "error" })
-    } finally {
-      setIsSubmitting(false)
     }
   }, [
+    isImageGenerationMode,
     user,
-    files,
-    createOptimisticAttachments,
     input,
     setMessages,
     setInput,
+    setIsSubmitting,
+    toast,
+    // dependencies dari logika chat normal
+    files,
+    createOptimisticAttachments,
     setFiles,
     checkLimitsAndNotify,
     cleanupOptimisticAttachments,
@@ -243,17 +286,15 @@ export function useChatCore({
     handleFileUploads,
     selectedModel,
     isAuthenticated,
-    preferences, // Tetap tambahkan preferences ke array dependensi
+    preferences,
     enableSearch,
     handleSubmit,
     cacheAndAddMessage,
     clearDraft,
     messages.length,
     bumpChat,
-    setIsSubmitting,
   ])
 
-  // Handle suggestion
   const handleSuggestion = useCallback(
     async (suggestion: string) => {
       setIsSubmitting(true)
@@ -294,8 +335,7 @@ export function useChatCore({
             userId: uid,
             model: selectedModel,
             isAuthenticated,
-            // Hapus `systemPrompt` dari sini
-            // systemPrompt: preferences.systemPrompt,
+            systemPrompt: preferences.systemPrompt,
           },
         }
 
@@ -323,11 +363,10 @@ export function useChatCore({
       isAuthenticated,
       setMessages,
       setIsSubmitting,
-      preferences, // Tetap tambahkan preferences ke array dependensi
+      preferences,
     ]
   )
 
-  // Handle reload
   const handleReload = useCallback(async () => {
     const uid = await getOrCreateGuestUserId(user)
     if (!uid) {
@@ -340,15 +379,13 @@ export function useChatCore({
         userId: uid,
         model: selectedModel,
         isAuthenticated,
-        // Hapus `systemPrompt` dari sini
-        // systemPrompt: preferences.systemPrompt,
+        systemPrompt: preferences.systemPrompt,
       },
     }
 
     reload(options)
   }, [user, chatId, selectedModel, isAuthenticated, preferences, reload])
 
-  // Handle input change - now with access to the real setInput function!
   const { setDraftValue } = useChatDraft(chatId)
   const handleInputChange = useCallback(
     (value: string) => {
@@ -359,7 +396,6 @@ export function useChatCore({
   )
 
   return {
-    // Chat state
     messages,
     input,
     handleSubmit,
@@ -373,16 +409,12 @@ export function useChatCore({
     isAuthenticated,
     systemPrompt,
     hasSentFirstMessageRef,
-
-    // Component state
     isSubmitting,
     setIsSubmitting,
     hasDialogAuth,
     setHasDialogAuth,
     enableSearch,
     setEnableSearch,
-
-    // Actions
     submit,
     handleSuggestion,
     handleReload,
