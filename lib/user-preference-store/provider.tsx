@@ -27,6 +27,7 @@ interface UserPreferencesContextType {
   setShowToolInvocations: (enabled: boolean) => void
   setShowConversationPreviews: (enabled: boolean) => void
   setMultiModelEnabled: (enabled: boolean) => void
+  setSystemPrompt: (prompt: string) => void // Perubahan Anda sudah benar di sini
   toggleModelVisibility: (modelId: string) => void
   isModelHidden: (modelId: string) => boolean
   isLoading: boolean
@@ -102,7 +103,6 @@ export function UserPreferencesProvider({
   const isAuthenticated = !!userId
   const queryClient = useQueryClient()
 
-  // Merge initial preferences with defaults
   const getInitialData = (): UserPreferences => {
     if (initialPreferences && isAuthenticated) {
       return initialPreferences
@@ -115,7 +115,6 @@ export function UserPreferencesProvider({
     return defaultPreferences
   }
 
-  // Query for user preferences
   const { data: preferences = getInitialData(), isLoading } =
     useQuery<UserPreferences>({
       queryKey: ["user-preferences", userId],
@@ -137,15 +136,12 @@ export function UserPreferencesProvider({
       enabled: typeof window !== "undefined",
       staleTime: 1000 * 60 * 5, // 5 minutes
       retry: (failureCount, error) => {
-        // Only retry for authenticated users and network errors
         return isAuthenticated && failureCount < 2
       },
-      // Use initial data if available to avoid unnecessary API calls
       initialData:
         initialPreferences && isAuthenticated ? getInitialData() : undefined,
     })
 
-  // Mutation for updating preferences
   const mutation = useMutation({
     mutationFn: async (update: Partial<UserPreferences>) => {
       const updated = { ...preferences, ...update }
@@ -210,6 +206,10 @@ export function UserPreferencesProvider({
     updatePreferences({ multiModelEnabled: enabled })
   }
 
+  const setSystemPrompt = (prompt: string) => {
+    updatePreferences({ systemPrompt: prompt })
+  }
+
   const toggleModelVisibility = (modelId: string) => {
     const currentHidden = preferences.hiddenModels || []
     const isHidden = currentHidden.includes(modelId)
@@ -233,6 +233,7 @@ export function UserPreferencesProvider({
         setShowToolInvocations,
         setShowConversationPreviews,
         setMultiModelEnabled,
+        setSystemPrompt,
         toggleModelVisibility,
         isModelHidden,
         isLoading,

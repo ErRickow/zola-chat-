@@ -23,7 +23,8 @@ type Props = {
 export function PromptTemplateSelector({ children }: Props) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const { userPreferences, setUserPreferences } = useUserPreferences()
+  // Fix the destructuring here
+  const { preferences, setSystemPrompt } = useUserPreferences()
   
   const filteredTemplates = promptTemplates.filter(template =>
     template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -31,7 +32,8 @@ export function PromptTemplateSelector({ children }: Props) {
   )
   
   const handleSelectTemplate = (template: PromptTemplate) => {
-    setUserPreferences({ ...userPreferences, systemPrompt: template.systemPrompt })
+    // Use the new setter function
+    setSystemPrompt(template.systemPrompt)
     setIsOpen(false)
   }
   
@@ -59,7 +61,8 @@ export function PromptTemplateSelector({ children }: Props) {
                   key={template.id}
                   className={cn(
                     "cursor-pointer rounded-md p-3 transition-colors hover:bg-accent",
-                    userPreferences.systemPrompt === template.systemPrompt && "bg-accent"
+                    // Compare with the preferences from the provider
+                    preferences.systemPrompt === template.systemPrompt && "bg-accent"
                   )}
                   onClick={() => handleSelectTemplate(template)}
                 >
