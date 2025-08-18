@@ -109,10 +109,10 @@ export function ModelSelector({
         }}
       >
         <div className="flex items-center gap-3">
-          {/*{provider?.icon && <provider.icon className="size-5" />}
-          <div className="flex flex-col gap-0">*/}
+          {provider?.icon && <provider.icon className="size-5" />}
+          <div className="flex flex-col gap-0">
           <span className="text-sm">{model.name}</span>
-          {/*</div>*/}
+          </div>
         </div>
         {isLocked && (
           <div className="border-input bg-accent text-muted-foreground flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-medium">
@@ -140,8 +140,8 @@ export function ModelSelector({
       className={cn("dark:bg-secondary justify-between", className)}
       disabled={isLoadingModels}
     >
-      <div className="flex items-center gap-2">
-        {currentProvider?.icon && <currentProvider.icon className="size-5" />}
+      <div className="flex items-center">
+        {/*{currentProvider?.icon && <currentProvider.icon className="size-5" />}*/}
         <span>{currentModel?.name || "Select model"}</span>
       </div>
       <CaretDownIcon className="size-4 opacity-50" />
