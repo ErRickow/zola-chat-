@@ -171,7 +171,7 @@ export function Chat() {
     bumpChat,
     // Teruskan state mode pembuatan gambar
     isImageGenerationMode,
-    setImageGenerationMode,
+    setIsImageGenerationMode,
   })
 
   // Memoize the conversation props to prevent unnecessary rerenders
@@ -207,7 +207,7 @@ export function Chat() {
       setEnableSearch,
       enableSearch,
       isImageGenerationMode,
-      setImageGenerationMode,
+      setIsImageGenerationMode,
     }),
     [
       input,
@@ -229,7 +229,7 @@ export function Chat() {
       setEnableSearch,
       enableSearch,
       isImageGenerationMode,
-      setImageGenerationMode,
+      setIsImageGenerationMode,
     ]
   )
 
