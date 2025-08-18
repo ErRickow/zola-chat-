@@ -7,6 +7,11 @@ import {
   PromptInputActions,
   PromptInputTextarea,
 } from "@/components/prompt-kit/prompt-input"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { useCodeBlockFullScreen } from "@/app/context/code-block-fullscreen-context";
 import { Button } from "@/components/ui/button"
 import { getModelInfo } from "@/lib/models"
@@ -180,18 +185,22 @@ export function ChatInput({
                 isUserAuthenticated={isUserAuthenticated}
                 model={selectedModel}
               />
-            {/* Add this button */}
-              <PromptTemplateSelector>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="size-8"
-                  tooltip="Select Prompt Template"
-                >
-                  <MagicWandIcon className="size-5" />
-                </Button>
-              </PromptTemplateSelector>
+              { /* Corrected code starts here */ }
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <PromptTemplateSelector>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="size-8"
+                    >
+                      <MagicWandIcon className="size-5" />
+                    </Button>
+                  </PromptTemplateSelector>
+                </TooltipTrigger>
+                <TooltipContent>Select Prompt Template</TooltipContent>
+              </Tooltip>
               <ModelSelector
                 selectedModelId={selectedModel}
                 setSelectedModelId={onSelectModel}
