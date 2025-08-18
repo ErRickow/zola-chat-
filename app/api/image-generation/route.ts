@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-import { getNeosantaraApiKey } from "@/lib/user-keys"
 import { getOrCreateGuestUserId } from "@/lib/api"
 import { createSupabase } from "@/lib/supabase/server"
 import { nanoid } from "@/lib/utils"
@@ -15,7 +14,7 @@ export async function POST(req: Request) {
     // Ambil API key dari database atau environment
     // Anda perlu mengimplementasikan fungsi getNeosantaraApiKey
     const supabase = createSupabase()
-    const apiKey = await getNeosantaraApiKey(supabase, userId)
+    const apiKey = process.env.NEOSANTARA_API_KEY ?? ""
 
     if (!apiKey) {
       return NextResponse.json({ error: "Missing API key" }, { status: 401 })
