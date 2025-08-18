@@ -1,150 +1,206 @@
-import {
-  Message,
-  MessageAction,
-  MessageActions,
-  MessageContent,
-} from "@/components/prompt-kit/message"
+"use client"
+
 import { useUserPreferences } from "@/lib/user-preference-store/provider"
-import { cn } from "@/lib/utils"
-import type { Message as MessageAISDK } from "@ai-sdk/react"
-import { ArrowClockwise, Check, Copy } from "@phosphor-icons/react"
-import { getSources } from "./get-sources"
+import { useModel } from "@/lib/model-store/provider"
+import {
+  ReasoningUIPart,
+  SourcesUIPart,
+  StepUIPart,
+  TextUIPart,
+  ToolInvocationUIPart,
+  UIPart,
+} from "ai"
+import { motion } from "framer-motion"
+import React, { FC, useMemo } from "react"
+import {
+  ButtonMessage,
+  ButtonMessageEdit,
+  ButtonMessageReload,
+} from "../common/button-message"
+import { CodeBlock } from "../prompt-kit/code-block"
+import { Markdown } from "../prompt-kit/markdown"
 import { Reasoning } from "./reasoning"
-import { SearchImages } from "./search-images"
 import { SourcesList } from "./sources-list"
 import { ToolInvocation } from "./tool-invocation"
+import { cn } from "@/lib/utils"
+import { Loader } from "../prompt-kit/loader"
+import { ArrowBendUpLeftIcon, CheckIcon, CopyIcon } from "@phosphor-icons/react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 type MessageAssistantProps = {
-  children: string
+  children?: string
+  id?: string
+  copied: boolean
   isLast?: boolean
-  hasScrollAnchor?: boolean
-  copied?: boolean
-  copyToClipboard?: () => void
-  onReload?: () => void
-  parts?: MessageAISDK["parts"]
   status?: "streaming" | "ready" | "submitted" | "error"
+  parts?: UIPart[]
+  onReload?: () => void
+  hasScrollAnchor?: boolean
+  copyToClipboard: () => void
   className?: string
+  attachments?: any[] // Tambahkan baris ini
 }
 
-export function MessageAssistant({
+const getComponentForPart = (
+  part: UIPart,
+  props: { [key: string]: any }
+) => {
+  switch (part.type) {
+    case "text":
+      return (
+        <Markdown
+          content={part.text}
+          isStreaming={props.isStreaming}
+          markdownProps={{
+            components: {
+              p: ({ ...pProps }) => (
+                <p {...pProps} className="pb-1 last-of-type:pb-0" />
+              ),
+              pre: ({ ...preProps }) => {
+                const language =
+                  preProps.children?.[0]?.props?.className?.split(
+                    "language-"
+                  )[1]
+                return (
+                  <CodeBlock
+                    {...preProps}
+                    className="my-3 overflow-x-auto rounded-md"
+                    language={language}
+                    code={preProps.children?.[0]?.props?.children || ""}
+                  />
+                )
+              },
+            },
+          }}
+        />
+      )
+
+    case "tool_invocation":
+      return (
+        <ToolInvocation
+          name={part.toolName}
+          args={part.args}
+          result={part.result}
+        />
+      )
+
+    case "sources":
+      return <SourcesList {...part} />
+
+    case "reasoning":
+      return <Reasoning {...part} />
+
+    default:
+      return null
+  }
+}
+
+export const MessageAssistant: FC<MessageAssistantProps> = ({
   children,
+  copied,
+  onReload,
   isLast,
   hasScrollAnchor,
-  copied,
-  copyToClipboard,
-  onReload,
   parts,
   status,
+  copyToClipboard,
   className,
-}: MessageAssistantProps) {
+  attachments, // Terima properti baru
+}) => {
   const { preferences } = useUserPreferences()
-  const sources = getSources(parts)
-  const toolInvocationParts = parts?.filter(
-    (part) => part.type === "tool-invocation"
+  const { models } = useModel()
+
+  const shouldRenderTools = useMemo(
+    () => preferences.showToolInvocations && models.some((m) => m.tools),
+    [preferences.showToolInvocations, models]
   )
-  const reasoningParts = parts?.find((part) => part.type === "reasoning")
-  const contentNullOrEmpty = children === null || children === ""
-  const isLastStreaming = status === "streaming" && isLast
-  const searchImageResults =
-    parts
-      ?.filter(
+
+  const hasContent = useMemo(() => {
+    return (
+      (children && children.trim().length > 0) ||
+      (parts && parts.length > 0) ||
+      (attachments && attachments.length > 0)
+    )
+  }, [children, parts, attachments])
+
+  // Tambahkan logika untuk menampilkan gambar di sini
+  const imageAttachment = attachments?.find(att => att.contentType?.startsWith("image/"))
+  if (imageAttachment) {
+    return (
+      <div className="group min-h-scroll-anchor flex w-full max-w-3xl flex-col items-start gap-2 px-6 pb-2">
+        <img src={imageAttachment.url} alt="Generated Image" className="max-w-full rounded-md" />
+      </div>
+    );
+  }
+
+  const getFilteredParts = useMemo(() => {
+    if (!parts) return []
+
+    if (shouldRenderTools) {
+      return parts
+    } else {
+      return parts.filter(
         (part) =>
-          part.type === "tool-invocation" &&
-          part.toolInvocation?.state === "result" &&
-          part.toolInvocation?.toolName === "imageSearch" &&
-          part.toolInvocation?.result?.content?.[0]?.type === "images"
+          part.type === "text" ||
+          part.type === "reasoning" ||
+          part.type === "sources"
       )
-      .flatMap((part) =>
-        part.type === "tool-invocation" &&
-        part.toolInvocation?.state === "result" &&
-        part.toolInvocation?.toolName === "imageSearch" &&
-        part.toolInvocation?.result?.content?.[0]?.type === "images"
-          ? (part.toolInvocation?.result?.content?.[0]?.results ?? [])
-          : []
-      ) ?? []
+    }
+  }, [parts, shouldRenderTools])
+
+  if (!hasContent) return null
+
+  const isStreaming = status === "streaming"
 
   return (
-    <Message
+    <div
+      id={hasScrollAnchor ? "scroll-anchor" : undefined}
       className={cn(
-        "group flex w-full max-w-3xl flex-1 items-start gap-4 px-6 pb-2",
-        hasScrollAnchor && "min-h-scroll-anchor",
+        "group min-h-scroll-anchor flex w-full max-w-3xl flex-col items-start gap-2 px-6 pb-2",
         className
       )}
     >
-      <div className={cn("flex min-w-full flex-col gap-2", isLast && "pb-8")}>
-        {reasoningParts && reasoningParts.reasoning && (
-          <Reasoning
-            reasoning={reasoningParts.reasoning}
-            isStreaming={status === "streaming"}
-          />
+      <div className="flex w-full flex-col gap-2">
+        {hasContent && (
+          <div className="flex w-full flex-col gap-2">
+            {getFilteredParts.map((part, index) => (
+              <React.Fragment key={index}>
+                {getComponentForPart(part, { isStreaming })}
+              </React.Fragment>
+            ))}
+          </div>
         )}
 
-        {toolInvocationParts &&
-          toolInvocationParts.length > 0 &&
-          preferences.showToolInvocations && (
-            <ToolInvocation toolInvocations={toolInvocationParts} />
-          )}
-
-        {searchImageResults.length > 0 && (
-          <SearchImages results={searchImageResults} />
-        )}
-
-        {contentNullOrEmpty ? null : (
-          <MessageContent
-            className={cn(
-              "prose dark:prose-invert relative min-w-full bg-transparent p-0",
-              "prose-h1:scroll-m-20 prose-h1:text-2xl prose-h1:font-semibold prose-h2:mt-8 prose-h2:scroll-m-20 prose-h2:text-xl prose-h2:mb-3 prose-h2:font-medium prose-h3:scroll-m-20 prose-h3:text-base prose-h3:font-medium prose-h4:scroll-m-20 prose-h5:scroll-m-20 prose-h6:scroll-m-20 prose-strong:font-medium prose-table:block prose-table:overflow-y-auto"
-            )}
-            markdown={true}
+        {isStreaming && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
           >
-            {children}
-          </MessageContent>
-        )}
-
-        {sources && sources.length > 0 && <SourcesList sources={sources} />}
-
-        {Boolean(isLastStreaming || contentNullOrEmpty) ? null : (
-          <MessageActions
-            className={cn(
-              "-ml-2 flex gap-0 opacity-0 transition-opacity group-hover:opacity-100"
-            )}
-          >
-            <MessageAction
-              tooltip={copied ? "Copied!" : "Copy text"}
-              side="bottom"
-            >
-              <button
-                className="hover:bg-accent/60 text-muted-foreground hover:text-foreground flex size-7.5 items-center justify-center rounded-full bg-transparent transition"
-                aria-label="Copy text"
-                onClick={copyToClipboard}
-                type="button"
-              >
-                {copied ? (
-                  <Check className="size-4" />
-                ) : (
-                  <Copy className="size-4" />
-                )}
-              </button>
-            </MessageAction>
-            {isLast ? (
-              <MessageAction
-                tooltip="Regenerate"
-                side="bottom"
-                delayDuration={0}
-              >
-                <button
-                  className="hover:bg-accent/60 text-muted-foreground hover:text-foreground flex size-7.5 items-center justify-center rounded-full bg-transparent transition"
-                  aria-label="Regenerate"
-                  onClick={onReload}
-                  type="button"
-                >
-                  <ArrowClockwise className="size-4" />
-                </button>
-              </MessageAction>
-            ) : null}
-          </MessageActions>
+            <Loader />
+          </motion.div>
         )}
       </div>
-    </Message>
+
+      <div className="text-muted-foreground -mt-1 flex w-full items-center justify-end gap-1.5 px-0 text-xs opacity-0 transition-opacity group-hover:opacity-100">
+        <ButtonMessage
+          size="icon"
+          variant="ghost"
+          aria-label="Copy message to clipboard"
+          className={cn("size-7 transition-opacity", copied && "opacity-100")}
+          onClick={copyToClipboard}
+        >
+          {copied ? (
+            <CheckIcon className="size-4" />
+          ) : (
+            <CopyIcon className="size-4" />
+          )}
+        </ButtonMessage>
+
+        {isLast && status !== "streaming" && (
+          <ButtonMessageReload onClick={onReload} />
+        )}
+      </div>
+    </div>
   )
 }
