@@ -1,4 +1,7 @@
+"use client"
+
 import { useChatDraft } from "@/app/hooks/use-chat-draft"
+import { useUserPreferences } from "@/lib/user-preference-store/provider"
 import { toast } from "@/components/ui/toast"
 import { getOrCreateGuestUserId } from "@/lib/api"
 import { MESSAGE_MAX_LENGTH, SYSTEM_PROMPT_DEFAULT } from "@/lib/config"
@@ -55,6 +58,9 @@ export function useChatCore({
   const [hasDialogAuth, setHasDialogAuth] = useState(false)
   const [enableSearch, setEnableSearch] = useState(false)
 
+  // Mengambil user preferences dari hook
+  const { preferences } = useUserPreferences()
+
   // Refs and derived state
   const hasSentFirstMessageRef = useRef(false)
   const prevChatIdRef = useRef<string | null>(chatId)
@@ -94,6 +100,7 @@ export function useChatCore({
     reload,
     stop,
     setMessages,
+    setFiles: setChatFiles,
     setInput,
     append,
   } = useChat({
@@ -193,7 +200,8 @@ export function useChatCore({
           userId: uid,
           model: selectedModel,
           isAuthenticated,
-          systemPrompt: systemPrompt || SYSTEM_PROMPT_DEFAULT,
+          // Menggunakan systemPrompt dari preferences
+          systemPrompt: preferences.systemPrompt, 
           enableSearch,
         },
         experimental_attachments: attachments || undefined,
@@ -229,7 +237,7 @@ export function useChatCore({
     handleFileUploads,
     selectedModel,
     isAuthenticated,
-    systemPrompt,
+    preferences, // Tambahkan preferences ke array dependensi
     enableSearch,
     handleSubmit,
     cacheAndAddMessage,
@@ -280,7 +288,8 @@ export function useChatCore({
             userId: uid,
             model: selectedModel,
             isAuthenticated,
-            systemPrompt: SYSTEM_PROMPT_DEFAULT,
+            // Gunakan systemPrompt dari preferences di sini
+            systemPrompt: preferences.systemPrompt,
           },
         }
 
@@ -308,6 +317,7 @@ export function useChatCore({
       isAuthenticated,
       setMessages,
       setIsSubmitting,
+      preferences, // Tambahkan preferences ke array dependensi
     ]
   )
 
@@ -324,12 +334,13 @@ export function useChatCore({
         userId: uid,
         model: selectedModel,
         isAuthenticated,
-        systemPrompt: systemPrompt || SYSTEM_PROMPT_DEFAULT,
+        // Gunakan preferences.systemPrompt di sini
+        systemPrompt: preferences.systemPrompt,
       },
     }
 
     reload(options)
-  }, [user, chatId, selectedModel, isAuthenticated, systemPrompt, reload])
+  }, [user, chatId, selectedModel, isAuthenticated, preferences, reload])
 
   // Handle input change - now with access to the real setInput function!
   const { setDraftValue } = useChatDraft(chatId)
