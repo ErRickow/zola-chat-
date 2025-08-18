@@ -1,7 +1,7 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { createContext, ReactNode, useContext } from "react"
+import { createContext, ReactNode, useContext, useState } from "react"
 import {
   convertFromApiFormat,
   convertToApiFormat,
@@ -27,7 +27,7 @@ interface UserPreferencesContextType {
   setShowToolInvocations: (enabled: boolean) => void
   setShowConversationPreviews: (enabled: boolean) => void
   setMultiModelEnabled: (enabled: boolean) => void
-  setSystemPrompt: (prompt: string) => void // Perubahan Anda sudah benar di sini
+  setSystemPrompt: (prompt: string) => void
   toggleModelVisibility: (modelId: string) => void
   isModelHidden: (modelId: string) => boolean
   isLoading: boolean
