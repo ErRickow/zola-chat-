@@ -90,7 +90,7 @@ export function useChatCore({
     })
   }, [])
 
-  // Initialize useChat
+  // Inisialisasi useChat
   const {
     messages,
     input,
@@ -106,6 +106,12 @@ export function useChatCore({
     api: API_ROUTE_CHAT,
     initialMessages,
     initialInput: draftValue,
+    // Pindahkan properti body ke sini
+    body: {
+      systemPrompt: preferences.systemPrompt,
+    //  enableSearch: preferences.enableSearch,
+      // Tambahkan properti lain yang dibutuhkan di sini
+    },
     onFinish: cacheAndAddMessage,
     onError: handleError,
   })
@@ -199,14 +205,13 @@ export function useChatCore({
           userId: uid,
           model: selectedModel,
           isAuthenticated,
-          // Menggunakan systemPrompt dari preferences
-          systemPrompt: preferences.systemPrompt, 
-          enableSearch,
+          // Hapus `systemPrompt` dari sini
+          // systemPrompt: preferences.systemPrompt,
+          // Hapus `enableSearch` dari sini
+          // enableSearch: preferences.enableSearch,
         },
         experimental_attachments: attachments || undefined,
       }
-      console.log(options.body.systemPrompt)
-      console.log(options)
 
       handleSubmit(undefined, options)
       setMessages((prev) => prev.filter((msg) => msg.id !== optimisticId))
@@ -238,7 +243,7 @@ export function useChatCore({
     handleFileUploads,
     selectedModel,
     isAuthenticated,
-    preferences, // Tambahkan preferences ke array dependensi
+    preferences, // Tetap tambahkan preferences ke array dependensi
     enableSearch,
     handleSubmit,
     cacheAndAddMessage,
@@ -289,8 +294,8 @@ export function useChatCore({
             userId: uid,
             model: selectedModel,
             isAuthenticated,
-            // Gunakan systemPrompt dari preferences di sini
-            systemPrompt: preferences.systemPrompt,
+            // Hapus `systemPrompt` dari sini
+            // systemPrompt: preferences.systemPrompt,
           },
         }
 
@@ -318,7 +323,7 @@ export function useChatCore({
       isAuthenticated,
       setMessages,
       setIsSubmitting,
-      preferences, // Tambahkan preferences ke array dependensi
+      preferences, // Tetap tambahkan preferences ke array dependensi
     ]
   )
 
@@ -335,8 +340,8 @@ export function useChatCore({
         userId: uid,
         model: selectedModel,
         isAuthenticated,
-        // Gunakan preferences.systemPrompt di sini
-        systemPrompt: preferences.systemPrompt,
+        // Hapus `systemPrompt` dari sini
+        // systemPrompt: preferences.systemPrompt,
       },
     }
 

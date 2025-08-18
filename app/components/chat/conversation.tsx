@@ -1,3 +1,5 @@
+"use client"
+
 import {
   ChatContainerContent,
   ChatContainerRoot,
@@ -7,10 +9,11 @@ import { ScrollButton } from "@/components/prompt-kit/scroll-button"
 import { Message as MessageType } from "@ai-sdk/react"
 import { useRef } from "react"
 import { Message } from "./message"
+import { AnimatePresence, motion } from "framer-motion"
 
 type ConversationProps = {
   messages: MessageType[]
-  status?: "streaming" | "ready" | "submitted" | "error"
+  status ? : "streaming" | "ready" | "submitted" | "error"
   onDelete: (id: string) => void
   onEdit: (id: string, newText: string) => void
   onReload: () => void
@@ -24,11 +27,11 @@ export function Conversation({
   onReload,
 }: ConversationProps) {
   const initialMessageCount = useRef(messages.length)
-
-
+  
+  
   if (!messages || messages.length === 0)
     return <div className="h-full w-full"></div>
-
+  
   return (
     <div className="relative flex h-full w-full flex-col items-center overflow-x-hidden overflow-y-auto">
       <div className="pointer-events-none absolute top-0 right-0 left-0 z-10 mx-auto flex w-full flex-col justify-center">
@@ -43,30 +46,41 @@ export function Conversation({
             scrollbarWidth: "none",
           }}
         >
-          {messages?.map((message, index) => {
-            const isLast =
-              index === messages.length - 1 && status !== "submitted"
-            const hasScrollAnchor =
-              isLast && messages.length > initialMessageCount.current
+          <AnimatePresence>
+            {messages?.map((message, index) => {
+              const isLast =
+                index === messages.length - 1 && status !== "submitted"
+              const hasScrollAnchor =
+                isLast && messages.length > initialMessageCount.current
 
-            return (
-              <Message
-                key={message.id}
-                id={message.id}
-                variant={message.role}
-                attachments={message.experimental_attachments}
-                isLast={isLast}
-                onDelete={onDelete}
-                onEdit={onEdit}
-                onReload={onReload}
-                hasScrollAnchor={hasScrollAnchor}
-                parts={message.parts}
-                status={status}
-              >
-                {message.content}
-              </Message>
-            )
-          })}
+              return (
+                <motion.div
+                  key={message.id}
+                  layout // Tambahkan ini untuk animasi posisi
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.3 }}
+                  className="w-full flex justify-center" // Tambahkan kelas ini
+                >
+                  <Message
+                    id={message.id}
+                    variant={message.role}
+                    attachments={message.experimental_attachments}
+                    isLast={isLast}
+                    onDelete={onDelete}
+                    onEdit={onEdit}
+                    onReload={onReload}
+                    hasScrollAnchor={hasScrollAnchor}
+                    parts={message.parts}
+                    status={status}
+                  >
+                    {message.content}
+                  </Message>
+                </motion.div>
+              )
+            })}
+          </AnimatePresence>
           {status === "submitted" &&
             messages.length > 0 &&
             messages[messages.length - 1].role === "user" && (
