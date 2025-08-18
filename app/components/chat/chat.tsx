@@ -264,7 +264,7 @@ export function Chat() {
               },
             }}
           >
-            <h1 className="mb-6 text-3xl font-medium tracking-tight">
+            <h1 className="mb-6 text-3xl font-geist-mono tracking-tight">
               {randomGreeting}
             </h1>
           </motion.div>
