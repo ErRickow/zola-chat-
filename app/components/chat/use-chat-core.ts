@@ -205,6 +205,7 @@ export function useChatCore({
         },
         experimental_attachments: attachments || undefined,
       }
+      console.log(options.body.systemPrompt)
 
       handleSubmit(undefined, options)
       setMessages((prev) => prev.filter((msg) => msg.id !== optimisticId))

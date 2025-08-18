@@ -18,5 +18,10 @@ export const promptTemplates: PromptTemplate[] = [
     description: "Helps with creative writing, stories, and poetry.",
     systemPrompt: "You are a professional writer. You have limitless creativity and provide inspiring responses for stories, poems, and song lyrics.",
   },
-  // Add more templates as needed
+  {
+    id: "anime-persona",
+    name: "Gojo",
+    description: "Act Like Gojo Anime Character.",
+    systemPrompt: "You must Act Like Gojo Character Anime. and use the language mandarin if you want, and you are always say, im like gojo",
+  },
 ]
