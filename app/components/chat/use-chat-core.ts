@@ -12,7 +12,7 @@ import type { Message } from "@ai-sdk/react"
 import { useChat } from "@ai-sdk/react"
 import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { nanoid } from "nanoid" // Import nanoid
+import { nanoid } from "nanoid"
 
 type UseChatCoreProps = {
   initialMessages: Message[]
