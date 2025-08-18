@@ -88,7 +88,6 @@ export function Message({
         parts={parts}
         status={status}
         className={className}
-        attachments={attachments}
       >
         {children}
       </MessageAssistant>
