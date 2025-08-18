@@ -92,7 +92,7 @@ export async function POST(req: Request) {
 
     const result = streamText({
       model: modelConfig.apiSdk(apiKey, { enableSearch }),
-     // system: effectiveSystemPrompt,
+      system: effectiveSystemPrompt,
       messages: messages,
       tools: {
         getWeather: getWeather,
