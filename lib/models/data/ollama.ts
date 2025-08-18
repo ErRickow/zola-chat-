@@ -119,36 +119,6 @@ const neosantaraModels: ModelConfig[] = [
         apiKey
       ),
   },
-  {
-    id: "neosantara-gen-2045",
-    name: "Neosantara Gen 2045",
-    provider: "Neosantara",
-    providerId: "openai", // Menggunakan providerId 'openai' agar dapat menggunakan endpoint images/generations
-    baseProviderId: "openai",
-    imageGeneration: true, // PROPERTI BARU
-    description: "Advanced image generation model.",
-    tags: ["image-generation", "pro"],
-    inputCost: 0.0,
-    outputCost: 0.0,
-    priceUnit: "pro",
-    vision: false,
-    tools: false,
-    audio: false,
-    reasoning: false,
-    openSource: false,
-    speed: "Fast",
-    intelligence: "High",
-    website: "https://neosantara.xyz",
-    apiDocs: "https://docs.neosantara.xyz",
-    modelPage: "https://neosantara.xyz/models",
-    icon: "neosantara", // Gunakan ikon Neosantara jika tersedia
-    apiSdk: (apiKey?: string) =>
-      openproviders(
-        "neosantara-gen-2045" as string,
-        undefined,
-        apiKey
-      ),
-  },
 ];
 
 // Function to get Ollama models (which are now your Neosantara models)

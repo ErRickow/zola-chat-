@@ -11,14 +11,13 @@ import { SYSTEM_PROMPT_DEFAULT } from "@/lib/config"
 import { useUserPreferences } from "@/lib/user-preference-store/provider"
 import { useUser } from "@/lib/user-store/provider"
 import { cn } from "@/lib/utils"
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence, motion } from "motion/react"
 import dynamic from "next/dynamic"
 import { redirect } from "next/navigation"
-import { useMemo, useState, useEffect } from "react" // Tambahkan useEffect
+import { useMemo, useState } from "react"
 import { useChatCore } from "./use-chat-core"
 import { useChatOperations } from "./use-chat-operations"
 import { useFileUpload } from "./use-file-upload"
-import { getModelInfo } from "@/lib/models" // Tambahkan impor getModelInfo
 
 const FeedbackWidget = dynamic(
   () => import("./feedback-widget").then((mod) => mod.FeedbackWidget),
@@ -83,7 +82,7 @@ export function Chat() {
   const randomGreeting = useMemo(() => {
     const randomIndex = Math.floor(Math.random() * GREETING_MESSAGES.length)
     return GREETING_MESSAGES[randomIndex]
-  }, [])
+  }, []) // Empty dependency agar hanya random sekali
 
   // File upload functionality
   const {
@@ -103,19 +102,6 @@ export function Chat() {
     updateChatModel,
     chatId,
   })
-
-  // State untuk mode image generation
-  const [isImageGenerationMode, setImageGenerationMode] = useState(false);
-  
-  const selectedModelConfig = getModelInfo(selectedModel);
-  const hasImageGenerationSupport = Boolean(selectedModelConfig?.imageGeneration);
-
-  // Jika model yang dipilih tidak mendukung image generation, matikan mode tersebut
-  useEffect(() => {
-    if (!hasImageGenerationSupport && isImageGenerationMode) {
-      setImageGenerationMode(false);
-    }
-  }, [hasImageGenerationSupport, isImageGenerationMode]);
 
   // State to pass between hooks
   const [hasDialogAuth, setHasDialogAuth] = useState(false)
@@ -169,9 +155,6 @@ export function Chat() {
     selectedModel,
     clearDraft,
     bumpChat,
-    // Teruskan state mode pembuatan gambar
-    isImageGenerationMode,
-    setImageGenerationMode,
   })
 
   // Memoize the conversation props to prevent unnecessary rerenders
@@ -206,8 +189,6 @@ export function Chat() {
       status,
       setEnableSearch,
       enableSearch,
-      isImageGenerationMode,
-      setImageGenerationMode,
     }),
     [
       input,
@@ -228,8 +209,6 @@ export function Chat() {
       status,
       setEnableSearch,
       enableSearch,
-      isImageGenerationMode,
-      setImageGenerationMode,
     ]
   )
 
