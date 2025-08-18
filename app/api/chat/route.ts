@@ -80,6 +80,8 @@ export async function POST(req: Request) {
     }
 
     const effectiveSystemPrompt = systemPrompt || SYSTEM_PROMPT_DEFAULT
+    
+    console.log(effectiveSystemPrompt)
 
     let apiKey: string | undefined
     if (isAuthenticated && userId) {
