@@ -6,28 +6,28 @@ import { MODEL_DEFAULT } from "../../config"
 import { fetchClient } from "../../fetch"
 import { API_ROUTE_UPDATE_CHAT_MODEL } from "../../routes"
 
-export async function getChatsForUserInDb(userId: string): Promise<Chats[]> {
+export async function getChatsForUserInDb(userId: string): Promise < Chats[] > {
   const supabase = createClient()
   if (!supabase) return []
-
+  
   const { data, error } = await supabase
-    .from("chats")
-    .select("*")
-    .eq("user_id", userId)
-    .order("updated_at", { ascending: false })
-
+  .from("chats")
+  .select("*")
+  .eq("user_id", userId)
+  .order("updated_at", { ascending: false })
+  
   if (!data || error) {
     console.error("Failed to fetch chats:", error)
     return []
   }
-
+  
   return data
 }
 
 export async function updateChatTitleInDb(id: string, title: string) {
   const supabase = createClient()
   if (!supabase) return
-
+  
   const { error } = await supabase
     .from("chats")
     .update({ title, updated_at: new Date().toISOString() })
@@ -38,21 +38,21 @@ export async function updateChatTitleInDb(id: string, title: string) {
 export async function deleteChatInDb(id: string) {
   const supabase = createClient()
   if (!supabase) return
-
+  
   const { error } = await supabase.from("chats").delete().eq("id", id)
   if (error) throw error
 }
 
-export async function getAllUserChatsInDb(userId: string): Promise<Chats[]> {
+export async function getAllUserChatsInDb(userId: string): Promise < Chats[] > {
   const supabase = createClient()
   if (!supabase) return []
-
+  
   const { data, error } = await supabase
-    .from("chats")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-
+  .from("chats")
+  .select("*")
+  .eq("user_id", userId)
+  .order("created_at", { ascending: false })
+  
   if (!data || error) return []
   return data
 }
@@ -62,36 +62,36 @@ export async function createChatInDb(
   title: string,
   model: string,
   systemPrompt: string
-): Promise<string | null> {
+): Promise < string | null > {
   const supabase = createClient()
   if (!supabase) return null
-
+  
   const { data, error } = await supabase
-    .from("chats")
-    .insert({ user_id: userId, title, model, system_prompt: systemPrompt })
-    .select("id")
-    .single()
-
+  .from("chats")
+  .insert({ user_id: userId, title, model, system_prompt: systemPrompt })
+  .select("id")
+  .single()
+  
   if (error || !data?.id) return null
   return data.id
 }
 
-export async function fetchAndCacheChats(userId: string): Promise<Chats[]> {
+export async function fetchAndCacheChats(userId: string): Promise < Chats[] > {
   if (!isSupabaseEnabled) {
     return await getCachedChats()
   }
-
+  
   const data = await getChatsForUserInDb(userId)
-
+  
   if (data.length > 0) {
     await writeToIndexedDB("chats", data)
   }
-
+  
   return data
 }
 
-export async function getCachedChats(): Promise<Chats[]> {
-  const all = await readFromIndexedDB<Chats>("chats")
+export async function getCachedChats(): Promise < Chats[] > {
+  const all = await readFromIndexedDB < Chats > ("chats")
   return (all as Chats[]).sort(
     (a, b) => +new Date(b.created_at || "") - +new Date(a.created_at || "")
   )
@@ -100,7 +100,7 @@ export async function getCachedChats(): Promise<Chats[]> {
 export async function updateChatTitle(
   id: string,
   title: string
-): Promise<void> {
+): Promise < void > {
   await updateChatTitleInDb(id, title)
   const all = await getCachedChats()
   const updated = (all as Chats[]).map((c) =>
@@ -109,7 +109,7 @@ export async function updateChatTitle(
   await writeToIndexedDB("chats", updated)
 }
 
-export async function deleteChat(id: string): Promise<void> {
+export async function deleteChat(id: string): Promise < void > {
   await deleteChatInDb(id)
   const all = await getCachedChats()
   await writeToIndexedDB(
@@ -118,12 +118,12 @@ export async function deleteChat(id: string): Promise<void> {
   )
 }
 
-export async function getChat(chatId: string): Promise<Chat | null> {
-  const all = await readFromIndexedDB<Chat>("chats")
+export async function getChat(chatId: string): Promise < Chat | null > {
+  const all = await readFromIndexedDB < Chat > ("chats")
   return (all as Chat[]).find((c) => c.id === chatId) || null
 }
 
-export async function getUserChats(userId: string): Promise<Chat[]> {
+export async function getUserChats(userId: string): Promise < Chat[] > {
   const data = await getAllUserChatsInDb(userId)
   if (!data) return []
   await writeToIndexedDB("chats", data)
@@ -135,10 +135,15 @@ export async function createChat(
   title: string,
   model: string,
   systemPrompt: string
-): Promise<string> {
+): Promise < string > {
   const id = await createChatInDb(userId, title, model, systemPrompt)
-  const finalId = id ?? crypto.randomUUID()
-
+  const createNeosantaraId = (prefix: string = "neo") => {
+    const uuid = crypto.randomUUID()
+    const cleanId = uuid.replace(/-/g, "")
+    return `${prefix}${cleanId}`
+  }
+  const finalId = id ?? createNeosantaraId()
+  
   await writeToIndexedDB("chats", {
     id: finalId,
     title,
@@ -147,7 +152,7 @@ export async function createChat(
     system_prompt: systemPrompt,
     created_at: new Date().toISOString(),
   })
-
+  
   return finalId
 }
 
@@ -159,20 +164,20 @@ export async function updateChatModel(chatId: string, model: string) {
       body: JSON.stringify({ chatId, model }),
     })
     const responseData = await res.json()
-
+    
     if (!res.ok) {
       throw new Error(
         responseData.error ||
-          `Failed to update chat model: ${res.status} ${res.statusText}`
+        `Failed to update chat model: ${res.status} ${res.statusText}`
       )
     }
-
+    
     const all = await getCachedChats()
     const updated = (all as Chats[]).map((c) =>
       c.id === chatId ? { ...c, model } : c
     )
     await writeToIndexedDB("chats", updated)
-
+    
     return responseData
   } catch (error) {
     console.error("Error updating chat model:", error)
@@ -182,41 +187,41 @@ export async function updateChatModel(chatId: string, model: string) {
 
 export async function createNewChat(
   userId: string,
-  title?: string,
-  model?: string,
-  isAuthenticated?: boolean,
-  projectId?: string
-): Promise<Chats> {
+  title ? : string,
+  model ? : string,
+  isAuthenticated ? : boolean,
+  projectId ? : string
+): Promise < Chats > {
   try {
     const payload: {
       userId: string
       title: string
       model: string
-      isAuthenticated?: boolean
-      projectId?: string
+      isAuthenticated ? : boolean
+      projectId ? : string
     } = {
       userId,
       title: title || "New Chat",
       model: model || MODEL_DEFAULT,
       isAuthenticated,
     }
-
+    
     if (projectId) {
       payload.projectId = projectId
     }
-
+    
     const res = await fetchClient("/api/create-chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     })
-
+    
     const responseData = await res.json()
-
+    
     if (!res.ok || !responseData.chat) {
       throw new Error(responseData.error || "Failed to create chat")
     }
-
+    
     const chat: Chats = {
       id: responseData.chat.id,
       title: responseData.chat.title,
@@ -227,7 +232,7 @@ export async function createNewChat(
       updated_at: responseData.chat.updated_at,
       project_id: responseData.chat.project_id || null,
     }
-
+    
     await writeToIndexedDB("chats", chat)
     return chat
   } catch (error) {

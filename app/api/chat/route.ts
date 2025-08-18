@@ -11,7 +11,8 @@ import {
   validateAndTrackUsage,
 } from "./api"
 import { createErrorResponse, extractErrorMessage } from "./utils"
-import { getWeather, search, getWebContent } from "@/lib/tools"
+import { search, getWebContent } from "@/lib/tools"
+import { imageSearchTool } from "@/lib/tools/imageSearch/tool"
 
 export const maxDuration = 60
 
@@ -23,7 +24,6 @@ type ChatRequest = {
   isAuthenticated: boolean
   systemPrompt: string
   enableSearch: boolean
-  showToolInvocations: boolean
   message_group_id?: string
 }
 
@@ -37,7 +37,6 @@ export async function POST(req: Request) {
       isAuthenticated,
       systemPrompt,
       enableSearch,
-      showToolInvocations,
       message_group_id,
     } = (await req.json()) as ChatRequest
 
@@ -93,13 +92,11 @@ export async function POST(req: Request) {
     }
     
     // Objek tools dibuat secara kondisional berdasarkan nilai showToolInvocations
-    const tools = showToolInvocations
-      ? {
-          getWeather,
+    const tools = {
+          imageSearchTool,
           search,
           getWebContent,
-        }
-      : {};
+        };
 
     const result = streamText({
       model: modelConfig.apiSdk(apiKey, { enableSearch }),
