@@ -59,7 +59,7 @@ const neosantaraModels: ModelConfig[] = [
   },
   {
     id: "archipelago-70b",
-    name: "Archipelago 7B",
+    name: "Archipelago 70B",
     provider: "Neosantara",
     providerId: "ollama",
     modelFamily: "Archipelago",
